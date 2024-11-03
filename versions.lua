@@ -4,5 +4,6 @@ return {
   "v1.1.0-beta",
   "v1.1.1-beta",
   "v1.1.2-beta",
+  "v1.1.3-beta"
 }
 -- Add new versions at the end as they are released
