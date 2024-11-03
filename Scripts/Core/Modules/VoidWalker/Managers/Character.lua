@@ -9,6 +9,9 @@ local Characters = AshraelPackage.VoidWalker.Characters
 -- Global storage for all character data in the Voidwalker system
 Characters.CharacterData = Characters.CharacterData or {}
 
+-- Flag to track if a character switch is in progress
+Characters.IsSwitching = false
+
 -- Ensure the current player is registered; if not, prompt for registration
 function Characters.EnsureCurrentPlayerRegistered()
     local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name:lower()
@@ -17,7 +20,7 @@ function Characters.EnsureCurrentPlayerRegistered()
         return false
     end
 
-    if not Characters.CharacterData[currentName] or not Characters.CharacterData[currentName].isRegistered then
+    if not Characters.CharacterData[currentName] or not Characters.CharacterData[currentName].IsRegistered then
         cecho(string.format("<yellow>You are not registered in the Voidwalker system as %s.\n", currentName))
         cecho("<yellow>Please use 'voidwalk register <password>' to complete registration.\n")
         return false
@@ -30,20 +33,18 @@ end
 function Characters.RegisterCharacter(name, password)
     cecho(string.format("<cyan>Registering character %s for Voidwalker...\n", name))
 
-    -- Save character data with password
     Characters.CharacterData[name:lower()] = {
-        password = password,
+        Password = password,
         Stats = {},
         ProperName = name,
         Title = gmcp.Room.Players and gmcp.Room.Players[name] and gmcp.Room.Players[name].fullname or "",
         LastLocation = gmcp.Room.Info and gmcp.Room.Info.name or "Unknown",
         RoomExits = gmcp.Room.Info and gmcp.Room.Info.exits or {},
         Inventory = {},
-        isRegistered = true
+        IsRegistered = true
     }
 
-    -- Confirm data was saved
-    if Characters.CharacterData[name:lower()] and Characters.CharacterData[name:lower()].isRegistered then
+    if Characters.CharacterData[name:lower()] and Characters.CharacterData[name:lower()].IsRegistered then
         cecho(string.format("<green>Character %s has been registered successfully.\n", name))
     else
         cecho("<red>[ERROR] Registration failed to save for character " .. name .. "\n")
@@ -58,17 +59,17 @@ function Characters.AddCharacter(name, password)
     end
 
     Characters.CharacterData[name:lower()] = {
-        password = password,
+        Password = password,
         Stats = {},
         ProperName = name,
         Title = "",
         LastLocation = "Unknown",
         RoomExits = {},
         Inventory = {},
-        isRegistered = true
+        IsRegistered = true
     }
 
-    if Characters.CharacterData[name:lower()] and Characters.CharacterData[name:lower()].isRegistered then
+    if Characters.CharacterData[name:lower()] and Characters.CharacterData[name:lower()].IsRegistered then
         cecho(string.format("<green>Character %s has been added and registered.\n", name))
     else
         cecho("<red>[ERROR] Failed to save data for character " .. name .. "\n")
@@ -108,21 +109,36 @@ function Characters.ListCharacters()
     end
 
     for name, char in pairs(Characters.CharacterData) do
-        cecho("<blue>" .. (char.ProperName or name) .. " - Title: " .. (char.Title or "No title") ..
-              ", Last Location: " .. (char.LastLocation or "Unknown") .. "\n")
+        local primaryStatus = char.isPrimary and "<green>[Active]<reset> " or ""
+        cecho(string.format("<blue>%s%s - Title: %s, Last Location: %s\n", 
+              primaryStatus, (char.ProperName or name), (char.Title or "No title"), (char.LastLocation or "Unknown")))
     end
+end
+
+-- Set the primary (active) character in CharacterData
+function Characters.UpdatePrimaryStatus(currentName)
+    -- Loop through all characters and set only the current character as primary
+    for name, charData in pairs(Characters.CharacterData) do
+        charData.isPrimary = (name == currentName:lower())
+    end
+    cecho(string.format("<cyan>Character %s set as primary.\n", currentName))
+end
+
+-- Function to be called after successful login
+function Characters.HandleLogin(name)
+    Characters.UpdatePrimaryStatus(name)
+    Characters.IsSwitching = false  -- Reset switching flag
+    cecho(string.format("<green>Successfully logged in as %s and set as primary.\n", name))
 end
 
 -- Switch to a specified character by name
 function Characters.SwitchCharacter(name)
-    -- Retrieve current character's name from GMCP
     local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name:lower()
     if not currentName then
         cecho("<red>Error: Could not determine current character name from GMCP data.\n")
         return
     end
 
-    -- Update the data for the currently logged-in character before switching
     if Characters.CharacterData[currentName] then
         Characters.UpdateCharacterData(currentName)
         cecho(string.format("<cyan>Updated data for current character: %s.\n", currentName))
@@ -131,40 +147,41 @@ function Characters.SwitchCharacter(name)
         return
     end
 
-    -- Begin switching to the specified character
     local char = Characters.CharacterData[name:lower()]
-    if char and char.isRegistered then
-        cecho(string.format("<magenta>Switching to character: %s...\n", name))
+    if char and char.IsRegistered then
+        if not Characters.IsSwitching then
+            Characters.IsSwitching = true
+            cecho(string.format("<magenta>Switching to character: %s...\n", name))
 
-        -- Log out of the current session and reconnect
-        send("quit")
+            send("quit")
+            local nameTrigger, passwordTrigger
 
-        -- Declare variables to hold trigger IDs
-        local nameTrigger, passwordTrigger
+            tempTimer(2, function()
+                connectToServer("avatar.outland.org", 3000)
 
-        tempTimer(2, function()
-            connectToServer("avatar.outland.org", 3000)
+                nameTrigger = tempTrigger("What name shall you be known by, adventurer?", function()
+                    send(name)
 
-            -- Set up the login name trigger and assign it to the nameTrigger variable
-            nameTrigger = tempTrigger("What name shall you be known by, adventurer?", function()
-                send(name)
+                    passwordTrigger = tempTrigger("Your Password:", function()
+                        send(char.Password)
+                        Characters.HandleLogin(name)
 
-                -- Set up the password trigger and assign it to the passwordTrigger variable
-                passwordTrigger = tempTrigger("Your Password:", function()
-                    send(char.password)
-                    cecho(string.format("<green>Logged in as %s.\n", name))
+                        cecho(string.format("<green>Logged in as %s.\n", name))
 
-                    -- Clean up the triggers
-                    if nameTrigger then killTrigger(nameTrigger) end
-                    if passwordTrigger then killTrigger(passwordTrigger) end
+                        if nameTrigger then killTrigger(nameTrigger) end
+                        if passwordTrigger then killTrigger(passwordTrigger) end
+                    end)
                 end)
             end)
-        end)
+        else
+            cecho("<yellow>Character switch is already in progress. Please wait.\n")
+        end
     else
         cecho(string.format("<yellow>Character %s is not registered or was not found.\n", name))
     end
 end
 
+-- Utility to update character data from GMCP
 function Characters.UpdateCharacterData(name)
     local charName = name:lower()
     local char = Characters.CharacterData[charName]
@@ -175,7 +192,6 @@ function Characters.UpdateCharacterData(name)
 
     cecho(string.format("<cyan>[DEBUG] Updating GMCP data for character '%s'...\n", charName))
 
-    -- Update Stats
     if gmcp.Char.Vitals then
         char.Stats = {
             Health = gmcp.Char.Vitals.hp or char.Stats.Health,
@@ -187,32 +203,22 @@ function Characters.UpdateCharacterData(name)
             TNL = gmcp.Char.Vitals.tnl or char.Stats.TNL,
             MaxTNL = gmcp.Char.Vitals.maxtnl or char.Stats.MaxTNL
         }
-        cecho(string.format("<cyan>[DEBUG] Updated character stats for %s: HP=%s/%s, Mana=%s/%s\n",
-            charName, char.Stats.Health, char.Stats.Health_Max, char.Stats.Mana, char.Stats.Mana_Max))
     end
 
-    -- Update Room Information
     if gmcp.Room.Info then
         char.LastLocation = gmcp.Room.Info.name or char.LastLocation
         char.RoomExits = gmcp.Room.Info.exits or char.RoomExits
-        cecho(string.format("<cyan>[DEBUG] Updated LastLocation to '%s' for %s.\n", char.LastLocation, charName))
     end
 
-    -- Update Inventory
     if gmcp.Char.Items.List and gmcp.Char.Items.List.items then
         char.Inventory = {}
         for _, item in ipairs(gmcp.Char.Items.List.items) do
             table.insert(char.Inventory, item.name)
         end
-        cecho(string.format("<cyan>[DEBUG] Updated Inventory for %s with %d items.\n", charName, #char.Inventory))
     end
 
-    -- Update Proper Name and Title
     if gmcp.Char.Status then
         char.ProperName = gmcp.Char.Status.character_name or char.ProperName
         char.Title = gmcp.Room.Players[charName] and gmcp.Room.Players[charName].fullname or char.Title
-        cecho(string.format("<cyan>[DEBUG] Updated ProperName to '%s' and Title to '%s' for %s.\n",
-            char.ProperName, char.Title, charName))
     end
 end
-
