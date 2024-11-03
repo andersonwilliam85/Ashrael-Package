@@ -3,8 +3,8 @@ AshraelPackage.Utils = AshraelPackage.Utils or {}
 AshraelPackage.Utils.AutoUpdate = AshraelPackage.Utils.AutoUpdate or {}
 
 -- Define constants and paths
-AshraelPackage.Utils.AutoUpdate.Version = "v1.0"
-AshraelPackage.Utils.AutoUpdate.DownloadPath = getMudletHomeDir() .. "/ashrael-package/"
+AshraelPackage.Utils.AutoUpdate.Version = "v1.0"  -- Current version
+AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath = getMudletHomeDir() .. "/ashrael-package-data/"  -- Persisted folder for updates
 AshraelPackage.Utils.AutoUpdate.OnlineVersionFile = "https://raw.githubusercontent.com/andersonwilliam85/Ashrael-Package/main/versions.lua"
 AshraelPackage.Utils.AutoUpdate.OnlinePackageFile = "https://github.com/andersonwilliam85/Ashrael-Package/releases/download/"
 AshraelPackage.Utils.AutoUpdate.DownloadHandler = nil
@@ -39,20 +39,20 @@ end
 function AshraelPackage.Utils.AutoUpdate.CheckForUpdates()
     cecho("<green>Initiating Ashrael-Package update check...\n")
 
-    -- Ensure download directory exists
-    if not io.exists(AshraelPackage.Utils.AutoUpdate.DownloadPath) then
-        lfs.mkdir(AshraelPackage.Utils.AutoUpdate.DownloadPath)
-        cecho(string.format("<cyan>[DEBUG] Created download directory at %s\n", AshraelPackage.Utils.AutoUpdate.DownloadPath))
+    -- Ensure persistent download directory exists
+    if not io.exists(AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath) then
+        lfs.mkdir(AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath)
+        cecho(string.format("<cyan>[DEBUG] Created download directory at %s\n", AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath))
     end
 
     -- Download version information file
-    downloadFile(AshraelPackage.Utils.AutoUpdate.DownloadPath .. "versions.lua", AshraelPackage.Utils.AutoUpdate.OnlineVersionFile)
+    downloadFile(AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "versions.lua", AshraelPackage.Utils.AutoUpdate.OnlineVersionFile)
     cecho("<cyan>[DEBUG] Downloading version information from " .. AshraelPackage.Utils.AutoUpdate.OnlineVersionFile .. "\n")
 end
 
 -- List available versions
 function AshraelPackage.Utils.AutoUpdate.ListAvailableVersions()
-    local path = AshraelPackage.Utils.AutoUpdate.DownloadPath .. "versions.lua"
+    local path = AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "versions.lua"
     local availableVersions
     local status, err = pcall(function() availableVersions = dofile(path) end)
 
@@ -69,7 +69,7 @@ end
 
 -- Switch to a specific version
 function AshraelPackage.Utils.AutoUpdate.SwitchToVersion(version)
-    local path = AshraelPackage.Utils.AutoUpdate.DownloadPath .. "versions.lua"
+    local path = AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "versions.lua"
     local availableVersions
     local status, err = pcall(function() availableVersions = dofile(path) end)
 
@@ -92,20 +92,26 @@ end
 function AshraelPackage.Utils.AutoUpdate.UpdateToVersion(version)
     local packageURL = AshraelPackage.Utils.AutoUpdate.OnlinePackageFile .. version .. "/Ashrael-Package.mpackage"
     cecho(string.format("<cyan>[DEBUG] Downloading package from %s\n", packageURL))
-    downloadFile(AshraelPackage.Utils.AutoUpdate.DownloadPath .. "Ashrael-Package.mpackage", packageURL)
+    downloadFile(AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "Ashrael-Package.mpackage", packageURL)
 end
 
 -- Handle file download completion event
 function AshraelPackage.Utils.AutoUpdate.OnFileDownloaded(event, filename)
-    if filename == AshraelPackage.Utils.AutoUpdate.DownloadPath .. "versions.lua" then
+    if filename == AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "versions.lua" then
         cecho("<green>[DEBUG] Version information file downloaded successfully.\n")
         AshraelPackage.Utils.AutoUpdate.ListAvailableVersions()
-    elseif filename == AshraelPackage.Utils.AutoUpdate.DownloadPath .. "Ashrael-Package.mpackage" then
-        cecho("<green>[DEBUG] Package downloaded. Installing new version...\n")
-        
+    elseif filename == AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "Ashrael-Package.mpackage" then
+        cecho("<green>[DEBUG] Package downloaded. Preparing for installation...\n")
+
         -- Verify the package file exists before attempting to install
         if io.exists(filename) then
             cecho("<cyan>[DEBUG] Confirmed package file at: " .. filename .. "\n")
+
+            -- Uninstall existing package if it’s installed
+            if table.contains(getPackages(), "Ashrael-Package") then
+                cecho("<cyan>[DEBUG] Uninstalling existing Ashrael-Package before update...\n")
+                uninstallPackage("Ashrael-Package")
+            end
 
             -- Try installing the package
             local success, err = pcall(function() installPackage(filename) end)
