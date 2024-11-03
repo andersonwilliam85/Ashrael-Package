@@ -1,0 +1,32 @@
+# Python specific files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Log files
+*.log
+*.tmp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Backup and temporary files
+*.bak
+*.swp
+*.swo
+*.tmp
+*.tar
+*.zip
+*.tar.gz
+*.tar.bz2
+
+# Environment and configuration files
+.env
+*.env
+
+# Output or build directories
+/output/
+*.out
+*.dist
+*.cache
