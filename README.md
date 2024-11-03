@@ -1,24 +1,25 @@
 # Ashrael-Package
 
-The **Ashrael-Package** is a suite of modules designed to enhance gameplay for the **Avatar MUD** (avatar.outland.org:3000) by adding new commands, automation features, and quality-of-life improvements. Tailored for players seeking to streamline their experience, the package includes tools to assist with adventuring, character switching, and item tracking.
+The **Ashrael-Package** is a comprehensive suite of modules designed to enhance the **Avatar MUD** experience (avatar.outland.org:3000) by providing additional commands, automation features, and quality-of-life improvements. This package is built for players who want to streamline gameplay, manage multiple characters effortlessly, and maintain optimal resource management.
 
 ## Features
 
 ### 1. **Adventure Mode**
-   - Toggles between **solo** and **group** play modes, allowing quick adjustments based on play style.
-   - Manages recovery for health and mana, with spell-ups and healing requests as needed.
-   - **Status Checks:** Quickly view adventure mode status, recovery mode, and current configuration.
+   - Toggle between **solo** and **group** play modes to adjust engagement levels based on your play style.
+   - Manages recovery for health and mana, with built-in spell-ups and healing requests as needed.
+   - **Status Checks:** Quickly view the current adventure mode status, recovery mode, and configuration.
 
-### 2. **VoidWalker** (Alpha)
-   - **Voidwalking Between Characters:** Enables seamless transitions between alts with custom thematic messages.
-   - **Character Status Tracking:** Stores basic stats (health, mana, inventory) and last room visited for all characters.
-   - **Voidgaze Command:** Lists all characters with their status and location, accompanied by a void-themed message.
-   - **Item Search Across Characters:** Easily locate items within the inventories of all your characters.
-   - **Autologin Animation:** Immersive animation simulates “slipping through the void” while hiding login screens.
-   - **Custom Login/Logout Messaging:** Descriptive transitions include messages like “You slip into the void…”
+### 2. **VoidWalker** (Beta)
+   - **Voidwalking Between Characters:** Allows seamless switching between alts with thematic, immersive messages.
+   - **Character Status Tracking:** Automatically stores each character’s basic stats (health, mana, inventory) and last room visited.
+   - **Voidgaze Command:** Provides an overview of all characters’ statuses, locations, and a unique void-themed message.
+   - **Item Search Across Characters:** Quickly locate items in the inventories of all your characters.
+   - **Autologin Animation:** An immersive “slipping through the void” animation hides login screens.
+   - **Custom Login/Logout Messaging:** Transition messages add depth with phrases like “You slip into the void…”
 
-### 3. **Auto Updates** (Coming Soon)
-   - Automatic updates allow you to keep your package up to date with the latest features and fixes. The package will notify you of available versions and handle installation seamlessly.
+### 3. **Auto Updates**
+   - **Automated Update Check:** Easily check for available updates to keep your package up-to-date with the latest features and fixes.
+   - **Version Management:** Choose to install the latest release or a specific version, with commands to list available versions and switch as needed.
 
 ## Installation
 
@@ -28,10 +29,10 @@ The **Ashrael-Package** is a suite of modules designed to enhance gameplay for t
 
 2. **Install in Mudlet:**
    - Open Mudlet, go to **Package Manager**, and select **Install Package**.
-   - Choose the downloaded `Ashrael-Package.mpackage` file to complete the installation.
+   - Select the downloaded `Ashrael-Package.mpackage` file to complete the installation.
 
-3. **Follow Setup Instructions:**
-   - Configure any required aliases, triggers, or settings for **Adventure Mode** and **VoidWalker** as described in the documentation.
+3. **Configure Settings:**
+   - Set up any required aliases, triggers, or settings for **Adventure Mode** and **VoidWalker** as outlined in the documentation.
 
 ## Requirements
 
@@ -40,10 +41,14 @@ The **Ashrael-Package** is a suite of modules designed to enhance gameplay for t
 
 ## Roadmap
 
-1. Complete **VoidWalker** implementation with item tracking, autologin, and void-themed character management.
-2. Launch **Auto Updates** feature for seamless patch management.
-3. Expand adventure automation features to include more advanced recovery and spell-up options.
+1. Finalize **VoidWalker** with expanded item tracking, autologin, and refined character management.
+2. Roll out **Auto Updates** to enable seamless, self-managed updates.
+3. Enhance **Adventure Mode** automation with more robust spell-ups, health/mana recovery, and situational adjustments.
 
 ## Contributing
 
-Contributions are welcome. For feature requests, please submit an issue, or contact the project maintainer directly.
+Contributions are welcome. For feature requests or bug reports, please submit an issue on the repository, or reach out to the project maintainer directly.
+
+--- 
+
+This package simplifies multi-character management, automated updates, and adventure mode controls, all while creating an immersive, customizable experience on Avatar MUD.
