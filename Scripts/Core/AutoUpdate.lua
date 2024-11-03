@@ -8,22 +8,29 @@ AshraelPackage.Utils.AutoUpdate.OnlineVersionFile = "https://raw.githubuserconte
 AshraelPackage.Utils.AutoUpdate.OnlinePackageFile = "https://github.com/andersonwilliam85/Ashrael-Package/releases/download/"
 AshraelPackage.Utils.AutoUpdate.DownloadHandler = nil
 AshraelPackage.Utils.AutoUpdate.CurrentVersionFile = AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "current_version.lua"
-AshraelPackage.Utils.AutoUpdate.MinimumSupportedVersion = "v1.1.0-beta"
+AshraelPackage.Utils.AutoUpdate.MinimumSupportedVersion = "v1.1.2-beta"
 
 -- Load current version from file if available
 function AshraelPackage.Utils.AutoUpdate.LoadCurrentVersion()
-    local status, version = pcall(function() return dofile(AshraelPackage.Utils.AutoUpdate.CurrentVersionFile) end)
-    if status and version then
-        AshraelPackage.Utils.AutoUpdate.Version = version
-        cecho("<cyan>[DEBUG] Loaded current version from file: " .. version .. "\n")
+    cecho("<cyan>[DEBUG] Attempting to load current version from file at: " .. AshraelPackage.Utils.AutoUpdate.CurrentVersionFile .. "\n")
+    if io.exists(AshraelPackage.Utils.AutoUpdate.CurrentVersionFile) then
+        local status, version = pcall(function() return dofile(AshraelPackage.Utils.AutoUpdate.CurrentVersionFile) end)
+        if status and version then
+            AshraelPackage.Utils.AutoUpdate.Version = version
+            cecho("<cyan>[DEBUG] Loaded current version from file: " .. version .. "\n")
+        else
+            AshraelPackage.Utils.AutoUpdate.Version = "v1.1.0-beta" -- Default version if not found, first version with autoupdate
+            cecho("<yellow>[WARNING] Could not load current version from file. Using default v1.1.0-beta\n")
+        end
     else
-        AshraelPackage.Utils.AutoUpdate.Version = "v1.1.0-beta" -- Default version if not found, first version with autoupdate
-        cecho("<yellow>[WARNING] Could not load current version, using default v1.1.0-beta\n")
+        cecho("<yellow>[WARNING] Current version file not found. Using default v1.1.0-beta\n")
+        AshraelPackage.Utils.AutoUpdate.Version = "v1.1.0-beta" -- Default version
     end
 end
 
 -- Save the current version to file
 function AshraelPackage.Utils.AutoUpdate.SaveCurrentVersion(version)
+    cecho("<cyan>[DEBUG] Saving current version to file at: " .. AshraelPackage.Utils.AutoUpdate.CurrentVersionFile .. "\n")
     local file = io.open(AshraelPackage.Utils.AutoUpdate.CurrentVersionFile, "w")
     if file then
         file:write('return "' .. version .. '"')
