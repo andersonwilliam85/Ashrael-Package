@@ -67,6 +67,29 @@ function AshraelPackage.Utils.AutoUpdate.ListAvailableVersions()
     end
 end
 
+-- Automatically update to the latest version if it's newer than the current version
+function AshraelPackage.Utils.AutoUpdate.CheckAndUpdateToLatestVersion()
+    local path = AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "versions.lua"
+    local availableVersions
+    local status, err = pcall(function() availableVersions = dofile(path) end)
+
+    if not status then
+        cecho("<red>[ERROR] Failed to load versions from versions.lua: " .. tostring(err) .. "\n")
+        return
+    end
+
+    -- Get the latest version from the versions list
+    local latestVersion = availableVersions[#availableVersions]
+
+    -- Compare the latest version with the current version
+    if latestVersion ~= AshraelPackage.Utils.AutoUpdate.Version then
+        cecho(string.format("<yellow>New version available: %s (current: %s). Updating...\n", latestVersion, AshraelPackage.Utils.AutoUpdate.Version))
+        AshraelPackage.Utils.AutoUpdate.UpdateToVersion(latestVersion)
+    else
+        cecho("<green>You are already on the latest version.\n")
+    end
+end
+
 -- Switch to a specific version
 function AshraelPackage.Utils.AutoUpdate.SwitchToVersion(version)
     local path = AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "versions.lua"
@@ -99,10 +122,10 @@ end
 function AshraelPackage.Utils.AutoUpdate.OnFileDownloaded(event, filename)
     if filename == AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "versions.lua" then
         cecho("<green>[DEBUG] Version information file downloaded successfully.\n")
-        AshraelPackage.Utils.AutoUpdate.ListAvailableVersions()
+        AshraelPackage.Utils.AutoUpdate.CheckAndUpdateToLatestVersion()
     elseif filename == AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "Ashrael-Package.mpackage" then
         cecho("<green>[DEBUG] Package downloaded. Preparing for installation...\n")
-
+        
         -- Verify the package file exists before attempting to install
         if io.exists(filename) then
             cecho("<cyan>[DEBUG] Confirmed package file at: " .. filename .. "\n")
