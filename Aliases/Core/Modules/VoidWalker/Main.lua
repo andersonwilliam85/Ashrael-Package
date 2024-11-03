@@ -4,50 +4,53 @@
 -- Alias: ^void(walk|gaze)(?:\s+(\w+)(?:\s+(.*))?)?$
 -- This alias uses regex to match various command structures for `voidwalk` and `voidgaze`
 
+-- Set local references to the VoidWalker namespaces
+local Characters = AshraelPackage.VoidWalker.Characters
+local Inventory = AshraelPackage.VoidWalker.Inventory
+
 local mainCommand = matches[2] -- 'walk' or 'gaze'
 local subCommand = matches[3] -- primary argument like character name or 'list'
 local option = matches[4] -- additional option like 'inventory', 'inv', 'add', 'remove', etc.
 
 if mainCommand == "walk" then
     if subCommand == "add" then
-        -- Commented-out actual function call, replaced with test output
-        -- AshraelPackage.VoidWalker.AddCharacterDialogue()
-        cecho("\n<cyan>Adding a new character... Prompting for name and password.<reset>\n")
+        -- Split `option` into character name and password if both are provided
+        local name, password = option:match("^(%S+)%s+(%S+)$")
+        if name and password then
+            -- Calls the AddCharacter function with user-provided name and password
+            Characters.AddCharacter(name, password)
+        else
+            cecho("\n<red>Usage: voidwalk add <char> <password><reset>\n")
+        end
 
     elseif subCommand == "remove" and option then
-        -- Commented-out actual function call, replaced with test output
-        -- AshraelPackage.VoidWalker.RemoveCharacter(option)
-        cecho(string.format("\n<cyan>Removing character: %s<reset>\n", option))
+        -- Calls the RemoveCharacter function
+        Characters.RemoveCharacter(option)
 
     elseif subCommand then
-        -- Commented-out actual function call, replaced with test output
-        -- AshraelPackage.VoidWalker.SwitchCharacter(subCommand)
-        cecho(string.format("\n<cyan>Switching to character: %s<reset>\n", subCommand))
+        -- Calls the SwitchCharacter function
+        Characters.SwitchCharacter(subCommand)
 
     else
-        cecho("\n<red>Usage: voidwalk <char> | voidwalk add | voidwalk remove <char><reset>\n")
+        cecho("\n<red>Usage: voidwalk <char> | voidwalk add <char> <password> | voidwalk remove <char><reset>\n")
     end
 
 elseif mainCommand == "gaze" then
     if not subCommand or subCommand == "list" then
-        -- Commented-out actual function call, replaced with test output
-        -- AshraelPackage.VoidWalker.ListCharacters()
-        cecho("\n<cyan>Listing all characters and their statuses.<reset>\n")
+        -- Calls the ListCharacters function
+        Characters.ListCharacters()
 
     elseif subCommand == "inventory" or subCommand == "inv" then
-        -- Commented-out actual function call, replaced with test output
-        -- AshraelPackage.VoidWalker.ShowConsolidatedInventory()
-        cecho("\n<cyan>Showing consolidated inventory across all characters.<reset>\n")
+        -- Calls the ShowConsolidatedInventory function
+        Inventory.ShowConsolidatedInventory()
 
     elseif subCommand == "search" and option then
-        -- Commented-out actual function call, replaced with test output
-        -- AshraelPackage.VoidWalker.SearchItemAcrossCharacters(option)
-        cecho(string.format("\n<cyan>Searching for item '%s' across all characters.<reset>\n", option))
+        -- Calls the SearchItem function
+        Inventory.SearchItem(option)
 
     elseif subCommand then
-        -- Commented-out actual function call, replaced with test output
-        -- AshraelPackage.VoidWalker.ShowCharacterDetails(subCommand)
-        cecho(string.format("\n<cyan>Showing details for character: %s<reset>\n", subCommand))
+        -- Calls the GetCharacterDetails function
+        Characters.GetCharacterDetails(subCommand)
 
     else
         cecho("\n<red>Usage: voidgaze [list | <char> | inventory | search <item>]<reset>\n")

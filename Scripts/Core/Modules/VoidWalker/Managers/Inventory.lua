@@ -6,6 +6,7 @@ local Inventory = AshraelPackage.VoidWalker.Inventory
 
 -- Consolidate and display the inventory of all characters
 function Inventory.ShowConsolidatedInventory()
+    cecho("<cyan>Function Call: ShowConsolidatedInventory\n")
     local consolidatedInventory = {}
     for name, char in pairs(Characters.characterData) do
         for _, item in ipairs(char.inventory) do
@@ -21,6 +22,7 @@ end
 
 -- Search for an item across all character inventories
 function Inventory.SearchItem(itemName)
+    cecho("<cyan>Function Call: SearchItem - Searching for item: " .. itemName .. "\n")
     local foundItems = false
     for name, char in pairs(Characters.characterData) do
         if table.contains(char.inventory, itemName) then
@@ -35,6 +37,7 @@ end
 
 -- Placeholder for future inventory functionality
 function Inventory.AddItemToCharacter(name, item)
+    cecho("<cyan>Function Call: AddItemToCharacter - Adding item " .. item .. " to character " .. name .. "\n")
     -- Placeholder for actual add item behavior
     cecho("<magenta>Adding item " .. item .. " to character " .. name .. " (not yet implemented).\n")
 end
