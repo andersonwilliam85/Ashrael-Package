@@ -1,0 +1,1 @@
+AshraelPackage = AshraelPackage or {}

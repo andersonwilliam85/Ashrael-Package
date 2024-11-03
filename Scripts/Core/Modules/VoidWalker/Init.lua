@@ -1,0 +1,1 @@
+AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
