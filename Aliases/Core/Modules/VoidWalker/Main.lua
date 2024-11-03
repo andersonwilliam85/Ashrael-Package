@@ -1,59 +1,69 @@
 -- Regex Triggers:
 -- ^void(walk|gaze)(?:\s+(\w+)(?:\s+(.*))?)?$
 
--- Alias: ^void(walk|gaze)(?:\s+(\w+)(?:\s+(.*))?)?$
--- This alias uses regex to match various command structures for `voidwalk` and `voidgaze`
+-- Regex Triggers:
+-- ^void(walk|gaze)(?:\s+(\w+)(?:\s+(.*))?)?$
 
 -- Set local references to the VoidWalker namespaces
 local Characters = AshraelPackage.VoidWalker.Characters
 local Inventory = AshraelPackage.VoidWalker.Inventory
 
-local mainCommand = matches[2] -- 'walk' or 'gaze'
-local subCommand = matches[3] -- primary argument like character name or 'list'
-local option = matches[4] -- additional option like 'inventory', 'inv', 'add', 'remove', etc.
+local mainCommand = matches[2]  -- 'walk' or 'gaze'
+local subCommand = matches[3]  -- primary argument like character name, 'register', 'add', etc.
+local option = matches[4]  -- additional option, e.g., password or item name
 
 if mainCommand == "walk" then
-    if subCommand == "add" then
-        -- Split `option` into character name and password if both are provided
-        local name, password = option:match("^(%S+)%s+(%S+)$")
-        if name and password then
-            -- Calls the AddCharacter function with user-provided name and password
-            Characters.AddCharacter(name, password)
+    -- Register command: `voidwalk register <password>`
+    if subCommand == "register" and option then
+        -- Register the current character with the provided password
+        local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name
+        if currentName then
+            Characters.RegisterCharacter(currentName, option)
         else
-            cecho("\n<red>Usage: voidwalk add <char> <password><reset>\n")
+            cecho("<red>Error: Unable to determine current character name.\n")
         end
 
+    -- Add command: `voidwalk add <character> <password>`
+    elseif subCommand == "add" then
+        -- Split `option` to get character name and password if provided
+        local name, password = option:match("^(%S+)%s+(%S+)$")
+        if name and password then
+            Characters.AddCharacter(name, password)
+        else
+            cecho("\n<red>Usage: voidwalk add <character> <password><reset>\n")
+        end
+
+    -- Remove command: `voidwalk remove <character>`
     elseif subCommand == "remove" and option then
-        -- Calls the RemoveCharacter function
         Characters.RemoveCharacter(option)
 
+    -- Switch command: `voidwalk <character>`
     elseif subCommand then
-        -- Calls the SwitchCharacter function
         Characters.SwitchCharacter(subCommand)
 
     else
-        cecho("\n<red>Usage: voidwalk <char> | voidwalk add <char> <password> | voidwalk remove <char><reset>\n")
+        cecho("\n<red>Usage: voidwalk <character> | voidwalk register <password> | voidwalk add <character> <password> | voidwalk remove <character><reset>\n")
     end
 
 elseif mainCommand == "gaze" then
+    -- List command: `voidgaze` or `voidgaze list`
     if not subCommand or subCommand == "list" then
-        -- Calls the ListCharacters function
         Characters.ListCharacters()
 
+    -- Inventory command: `voidgaze inventory` or `voidgaze inv`
     elseif subCommand == "inventory" or subCommand == "inv" then
-        -- Calls the ShowConsolidatedInventory function
         Inventory.ShowConsolidatedInventory()
 
+    -- Search command: `voidgaze search <item>`
     elseif subCommand == "search" and option then
-        -- Calls the SearchItem function
         Inventory.SearchItem(option)
 
+    -- Character details command: `voidgaze <character>`
     elseif subCommand then
-        -- Calls the GetCharacterDetails function
         Characters.GetCharacterDetails(subCommand)
 
     else
-        cecho("\n<red>Usage: voidgaze [list | <char> | inventory | search <item>]<reset>\n")
+        cecho("\n<red>Usage: voidgaze [list | <character> | inventory | search <item>]<reset>\n")
     end
 
 else
