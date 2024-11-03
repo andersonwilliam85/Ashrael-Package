@@ -124,11 +124,24 @@ function Characters.UpdatePrimaryStatus(currentName)
     cecho(string.format("<cyan>Character %s set as primary.\n", currentName))
 end
 
+-- Show a "void walking" message with an immersive, thematic effect
+function Characters.ShowVoidWalkingMessage()
+    local messages = {
+        "<cyan>You slip into the void, feeling reality drift away...</cyan>",
+        "<blue>Shadows whisper around you as you move between worlds...</blue>",
+        "<purple>The boundaries of existence blur as you cross the veil...</purple>"
+    }
+    for i, message in ipairs(messages) do
+        tempTimer(i, function() cecho(message .. "\n") end)
+    end
+end
+
 -- Function to be called after successful login
 function Characters.HandleLogin(name)
     Characters.UpdatePrimaryStatus(name)
     Characters.IsSwitching = false  -- Reset switching flag
     cecho(string.format("<green>Successfully logged in as %s and set as primary.\n", name))
+    setAppEnabled(true)  -- Re-enable output processing after login
 end
 
 -- Switch to a specified character by name
@@ -153,6 +166,10 @@ function Characters.SwitchCharacter(name)
             Characters.IsSwitching = true
             cecho(string.format("<magenta>Switching to character: %s...\n", name))
 
+            deleteLine()
+            -- Show void walking animation
+            Characters.ShowVoidWalkingMessage()
+            
             send("quit")
             local nameTrigger, passwordTrigger
 
