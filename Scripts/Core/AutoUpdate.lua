@@ -19,12 +19,12 @@ function AshraelPackage.Utils.AutoUpdate.LoadCurrentVersion()
             AshraelPackage.Utils.AutoUpdate.Version = version
             cecho("<cyan>[DEBUG] Loaded current version from file: " .. version .. "\n")
         else
-            AshraelPackage.Utils.AutoUpdate.Version = "v1.1.0-beta" -- Default version if not found, first version with autoupdate
-            cecho("<yellow>[WARNING] Could not load current version from file. Using default v1.1.0-beta\n")
+            AshraelPackage.Utils.AutoUpdate.Version = "v1.1.2-beta" -- Default version if not found, first version with autoupdate
+            cecho("<yellow>[WARNING] Could not load current version from file. Using default v1.1.2-beta\n")
         end
     else
-        cecho("<yellow>[WARNING] Current version file not found. Using default v1.1.0-beta\n")
-        AshraelPackage.Utils.AutoUpdate.Version = "v1.1.0-beta" -- Default version
+        cecho("<yellow>[WARNING] Current version file not found. Using default v1.1.2-beta\n")
+        AshraelPackage.Utils.AutoUpdate.Version = "v1.1.2-beta" -- Default version
     end
 end
 
@@ -168,8 +168,10 @@ function AshraelPackage.Utils.AutoUpdate.DisplayDownloadedVersions()
 
     cecho("<green>Available versions:\n")
     for _, version in ipairs(availableVersions) do
-        if version == AshraelPackage.Utils.AutoUpdate.Version then
-            cecho(string.format(" - %s <green>(current version)<reset>\n", version))
+        if version < AshraelPackage.Utils.AutoUpdate.MinimumSupportedVersion then
+            cecho(string.format(" - <red>%s (unsupported)<reset>\n", version))
+        elseif version == AshraelPackage.Utils.AutoUpdate.Version then
+            cecho(string.format(" - <green>%s (current version)<reset>\n", version))
         else
             cecho(string.format(" - %s\n", version))
         end
