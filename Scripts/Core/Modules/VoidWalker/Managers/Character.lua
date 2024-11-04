@@ -1,10 +1,6 @@
--- Define namespaces for Voidwalker characters
-AshraelPackage = AshraelPackage or {}
-AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
-AshraelPackage.VoidWalker.Characters = AshraelPackage.VoidWalker.Characters or {}
-
--- Set up a local reference for easier use
+-- Set up local references for easier access
 local Characters = AshraelPackage.VoidWalker.Characters
+local Inventory = AshraelPackage.VoidWalker.Inventory
 
 -- Global storage for all character data in the Voidwalker system
 Characters.CharacterData = Characters.CharacterData or {}
@@ -70,12 +66,25 @@ function Characters.RegisterCharacter(name, password)
     name = properCase(name)
     Characters.CharacterData[name] = {
         Password = password,
-        Stats = {},
+        Stats = {
+            Health = gmcp.Char.Vitals and gmcp.Char.Vitals.hp or 0,
+            Health_Max = gmcp.Char.Vitals and gmcp.Char.Vitals.maxhp or 0,
+            Mana = gmcp.Char.Vitals and gmcp.Char.Vitals.mp or 0,
+            Mana_Max = gmcp.Char.Vitals and gmcp.Char.Vitals.maxmp or 0,
+            Movement = gmcp.Char.Vitals and gmcp.Char.Vitals.mv or 0,
+            Movement_Max = gmcp.Char.Vitals and gmcp.Char.Vitals.maxmv or 0,
+            TNL = gmcp.Char.Vitals and gmcp.Char.Vitals.tnl or 0,
+            MaxTNL = gmcp.Char.Vitals and gmcp.Char.Vitals.maxtnl or 0,
+        },
         ProperName = name,
         LastLocation = gmcp.Room.Info and gmcp.Room.Info.name or "Unknown",
-        Inventory = {},
-        IsRegistered = true
+        IsRegistered = true,
+        IsActive = true
     }
+
+    -- Initialize inventory for the character and perform an initial scan
+    Inventory.InitializeInventory(name)
+    Inventory.UpdateInventory(name, "inv")
 
     cecho(string.format("<cyan>Your essence, %s, is now etched into the void.\n", name))
 end
@@ -90,12 +99,25 @@ function Characters.AddCharacter(name, password)
     name = properCase(name)
     Characters.CharacterData[name] = {
         Password = password,
-        Stats = {},
+        Stats = {
+            Health = 0,
+            Health_Max = 0,
+            Mana = 0,
+            Mana_Max = 0,
+            Movement = 0,
+            Movement_Max = 0,
+            TNL = 0,
+            MaxTNL = 0,
+        },
         ProperName = name,
         LastLocation = "Unknown",
-        Inventory = {},
-        IsRegistered = true
+        IsRegistered = true,
+        IsActive = false
     }
+
+    -- Initialize inventory for the character and perform an initial scan
+    Inventory.InitializeInventory(name)
+    Inventory.UpdateInventory(name, "inv")
 
     cecho(string.format("<cyan>%s has been inscribed upon the void.\n", name))
 end
@@ -106,6 +128,7 @@ function Characters.RemoveCharacter(name)
 
     if Characters.CharacterData[name] then
         Characters.CharacterData[name] = nil
+        Inventory.ClearInventory(name)  -- Clear inventory data for the character
         cecho(string.format("<red>%s has been erased from the void.\n", name))
     else
         cecho(string.format("<yellow>No trace of %s exists within the void.\n", name))
@@ -226,16 +249,8 @@ function Characters.UpdateCharacterData(name)
         char.LastLocation = gmcp.Room.Info.name or char.LastLocation
     end
 
-    if gmcp.Char.Items.List and gmcp.Char.Items.List.items then
-        char.Inventory = {}
-        for _, item in ipairs(gmcp.Char.Items.List.items) do
-            table.insert(char.Inventory, item.name)
-        end
-    end
-
-    if gmcp.Char.Status then
-        char.ProperName = gmcp.Char.Status.character_name or char.ProperName
-    end
+    -- Update inventory using the Inventory API
+    Inventory.UpdateInventory(charName, "inv")
 end
 
 -- List all characters in the system (VoidGaze function)
@@ -253,7 +268,7 @@ function Characters.ListCharacters()
     cecho("<magenta>===========================\n")
 end
 
--- Get detailed character information
+-- Get detailed character information including inventory
 function Characters.GetCharacterDetails(name)
     name = properCase(name)
     local char = Characters.CharacterData[name]
@@ -267,12 +282,8 @@ function Characters.GetCharacterDetails(name)
     cecho(string.format("  Health: %s/%s, Mana: %s/%s\n", char.Stats.Health or "N/A", char.Stats.Health_Max or "N/A",
                          char.Stats.Mana or "N/A", char.Stats.Mana_Max or "N/A"))
     cecho(string.format("  Last Location: %s\n", char.LastLocation or "Unknown"))
+    
+    -- Display inventory using Inventory API
     cecho("  Inventory:\n")
-    if char.Inventory and #char.Inventory > 0 then
-        for _, item in ipairs(char.Inventory) do
-            cecho(string.format("    - %s\n", item))
-        end
-    else
-        cecho("    None\n")
-    end
+    Inventory.ShowCharacterInventory(name)
 end
