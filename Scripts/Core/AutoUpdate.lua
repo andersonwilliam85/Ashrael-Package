@@ -7,52 +7,23 @@ AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath = getMudletHomeDir() .. "
 AshraelPackage.Utils.AutoUpdate.OnlineVersionFile = "https://raw.githubusercontent.com/andersonwilliam85/Ashrael-Package/main/versions.lua"
 AshraelPackage.Utils.AutoUpdate.OnlinePackageFile = "https://github.com/andersonwilliam85/Ashrael-Package/releases/download/"
 AshraelPackage.Utils.AutoUpdate.DownloadHandler = nil
-AshraelPackage.Utils.AutoUpdate.CurrentVersionFile = AshraelPackage.Utils.AutoUpdate.PersistentDownloadPath .. "current_version.lua"
 AshraelPackage.Utils.AutoUpdate.MinimumSupportedVersion = "v1.1.2-beta"
 AshraelPackage.Utils.AutoUpdate.DefaultVersion = "v1.1.2-beta"
 local packageName = "Ashrael-Package"
 
--- Load current version from file, Mudlet package metadata, or initialize with default
-function AshraelPackage.Utils.AutoUpdate.LoadCurrentVersion()
-    cecho("<cyan>[DEBUG] Attempting to load current version...\n")
+-- Initialize current version from Mudlet package metadata or default
+function AshraelPackage.Utils.AutoUpdate.InitializeVersion()
+    cecho("<cyan>[DEBUG] Initializing current version...\n")
 
-    -- Attempt to read the version from the current_version.lua file
-    if io.exists(AshraelPackage.Utils.AutoUpdate.CurrentVersionFile) then
-        local status, version = pcall(function() return dofile(AshraelPackage.Utils.AutoUpdate.CurrentVersionFile) end)
-        if status and version then
-            AshraelPackage.Utils.AutoUpdate.Version = version
-            cecho("<cyan>[DEBUG] Loaded current version from file: " .. version .. "\n")
-            return
-        else
-            cecho("<yellow>[WARNING] Could not load current version from file. Attempting to use package metadata.\n")
-        end
-    end
-
-    -- If file read failed, try to retrieve version from Mudlet package metadata
-    local packageVersion = getPackageVersion(packageName)
+    -- Attempt to retrieve version from Mudlet package metadata
+    local packageVersion = getPackageInfo(packageName).version
     if packageVersion then
         AshraelPackage.Utils.AutoUpdate.Version = packageVersion
         cecho("<cyan>[DEBUG] Loaded current version from Mudlet package metadata: " .. packageVersion .. "\n")
-        AshraelPackage.Utils.AutoUpdate.SaveCurrentVersion(packageVersion)
     else
-        -- If both file and metadata retrieval fail, initialize with the default version
-        cecho("<yellow>[WARNING] Could not retrieve version from package metadata. Initializing with default version.\n")
+        -- If metadata retrieval fails, initialize with the default version
         AshraelPackage.Utils.AutoUpdate.Version = AshraelPackage.Utils.AutoUpdate.DefaultVersion
-        AshraelPackage.Utils.AutoUpdate.SaveCurrentVersion(AshraelPackage.Utils.AutoUpdate.Version)
-    end
-end
-
--- Save the current version to file
-function AshraelPackage.Utils.AutoUpdate.SaveCurrentVersion(version)
-    cecho("<cyan>[DEBUG] Saving current version to file at: " .. AshraelPackage.Utils.AutoUpdate.CurrentVersionFile .. "\n")
-    local file = io.open(AshraelPackage.Utils.AutoUpdate.CurrentVersionFile, "w")
-    if file then
-        file:write('return "' .. version .. '"')
-        file:close()
-        AshraelPackage.Utils.AutoUpdate.Version = version
-        cecho("<cyan>Current version updated to: " .. version .. "\n")
-    else
-        cecho("<red>[ERROR] Failed to save current version to file.\n")
+        cecho("<yellow>[WARNING] Could not retrieve version from package metadata. Initializing with default version.\n")
     end
 end
 
@@ -148,14 +119,9 @@ function AshraelPackage.Utils.AutoUpdate.OnFileDownloaded(event, filename)
             end
             local success, err = pcall(function() installPackage(filename) end)
             if success then
-                -- Retrieve and save the new package version after installation
-                local installedVersion = getPackageVersion(packageName)
-                if installedVersion then
-                    AshraelPackage.Utils.AutoUpdate.SaveCurrentVersion(installedVersion)
-                    cecho("<green>Package installed successfully with version: " .. installedVersion .. "\n")
-                else
-                    cecho("<red>[ERROR] Could not retrieve version for installed package.\n")
-                end
+                -- Retrieve and display the new package version after installation
+                AshraelPackage.Utils.AutoUpdate.Version = getPackageInfo(packageName).version or AshraelPackage.Utils.AutoUpdate.DefaultVersion
+                cecho("<green>Package installed successfully with version: " .. AshraelPackage.Utils.AutoUpdate.Version .. "\n")
             else
                 cecho("<red>[ERROR] Failed to install package: " .. tostring(err) .. "\n")
             end
@@ -194,5 +160,5 @@ if AshraelPackage.Utils.AutoUpdate.DownloadHandler then
 end
 AshraelPackage.Utils.AutoUpdate.DownloadHandler = registerAnonymousEventHandler("sysDownloadDone", "AshraelPackage.Utils.AutoUpdate.OnFileDownloaded")
 
--- Load current version from file, package metadata, or initialize with default
-AshraelPackage.Utils.AutoUpdate.LoadCurrentVersion()
+-- Initialize the current version from package metadata or default
+AshraelPackage.Utils.AutoUpdate.InitializeVersion()
