@@ -1,10 +1,25 @@
+-- CODE REVIEW: I think you're trying to over optimize here and I'm not sure it'll work
+-- By using local State = AdventureMode.State, you are assigning the current value of 
+-- AdventureMode.State to State at the moment of execution. This means State becomes a 
+-- separate local reference to the value of AdventureMode.State at that specific time. 
+
+-- I'd recommend just calling the variable directly from AdventureMode.XXX
+-- In functions where you repeatadly call the same AdventureMode.XXX variable, set
+-- a local variable equal to AdventureMode.XXX at the beginning of the function (not the script)
+-- that way it'll be updated each time the function is called. See my gameloop script (eg MyClass)
+-- as an example. -Vagonuth
 local AdventureMode = AshraelPackage.AdventureMode
+-- CODE REVIEW: When Mudlet loads for the first time, it reads all your scripts from top to bottom.
+-- There is an error here because Main is being read before some of these variables below, causing this
+-- script not to load on first run. Make sure all variables are set before referencing them.
+-- I suspect the problem here is that Init is below Main in your script order.
 local Recall = AdventureMode.Recall
 local Utils = AdventureMode.Utils  -- Access to utility functions
 local Gear = AdventureMode.Gear      -- Lifted Gear to outer scope
 local Spellup = AdventureMode.Spellup -- Lifted Spellup to outer scope
 local Healing = AdventureMode.Healing -- Lifted Healing to outer scope
 local State = AdventureMode.State      -- Lifted State to outer scope
+
 
 -- Initiates recall and recovery process with added debugging
 function AdventureMode.InitiateRecallAndRecovery()
@@ -20,7 +35,11 @@ function AdventureMode.InitiateRecallAndRecovery()
         send("d")
         send("w")
 
-        tempTimer(5, function()
+        -- CODE REVIEW: Other options include checking to ensure you're at Sanctum's infirmary
+        -- Sometimes I like to use lag in my calculation of the wait time (for cases where the user issues a command but is in lag)
+        -- eg. tempTimer(tonumber(gmcp.Char.Vitals.lag) + 5, ...)
+        tempTimer(tonumber(gmcp.Char.Vitals.lag) + 5, function()
+            if gmcp.Char.Status.room_name ~= "AVATAR's Sanctum Infirmary" then error("Never made it to infirmary"); return; end
             Utils.DebugPrint("Equipping mana gear, initiating healing, and preparing spells.")  -- Updated debug print
             
             -- Attempt to equip mana gear
