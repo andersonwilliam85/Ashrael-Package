@@ -29,7 +29,7 @@ function AshraelPackage.Utils.AutoUpdate.LoadCurrentVersion()
     end
 
     -- If file read failed, try to retrieve version from Mudlet package metadata
-    local packageVersion = getPackageInfo(packageName).version
+    local packageVersion = getPackageVersion(packageName)
     if packageVersion then
         AshraelPackage.Utils.AutoUpdate.Version = packageVersion
         cecho("<cyan>[DEBUG] Loaded current version from Mudlet package metadata: " .. packageVersion .. "\n")
@@ -148,8 +148,14 @@ function AshraelPackage.Utils.AutoUpdate.OnFileDownloaded(event, filename)
             end
             local success, err = pcall(function() installPackage(filename) end)
             if success then
-                AshraelPackage.Utils.AutoUpdate.SaveCurrentVersion(version)
-                cecho("<green>Package installed successfully!\n")
+                -- Retrieve and save the new package version after installation
+                local installedVersion = getPackageVersion(packageName)
+                if installedVersion then
+                    AshraelPackage.Utils.AutoUpdate.SaveCurrentVersion(installedVersion)
+                    cecho("<green>Package installed successfully with version: " .. installedVersion .. "\n")
+                else
+                    cecho("<red>[ERROR] Could not retrieve version for installed package.\n")
+                end
             else
                 cecho("<red>[ERROR] Failed to install package: " .. tostring(err) .. "\n")
             end
