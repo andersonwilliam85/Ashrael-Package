@@ -1,6 +1,7 @@
 -- Define the AshraelPackage.VoidWalker.Inventory namespace
 AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
 AshraelPackage.VoidWalker.Inventory = AshraelPackage.VoidWalker.Inventory or {}
+AshraelPackage.VoidWalker.Characters = AshraelPackage.VoidWalker.Characters or {}
 
 local Inventory = AshraelPackage.VoidWalker.Inventory
 local Characters = AshraelPackage.VoidWalker.Characters  -- Access to character data
@@ -11,8 +12,8 @@ function Inventory.ShowConsolidatedInventory()
     local consolidatedInventory = {}
 
     -- Gather items from each character's inventory, noting who is carrying each
-    for name, char in pairs(Characters.CharacterData) do
-        for _, item in ipairs(char.Inventory) do
+    for name, char in pairs(Characters.CharacterData or {}) do
+        for _, item in ipairs(char.Inventory or {}) do
             consolidatedInventory[item] = consolidatedInventory[item] or {}
             table.insert(consolidatedInventory[item], char.ProperName)
         end
@@ -37,8 +38,8 @@ function Inventory.SearchItem(itemName)
     local lowerItemName = itemName:lower()
 
     -- Search each character's inventory for items that include the specified name
-    for name, char in pairs(Characters.CharacterData) do
-        for _, item in ipairs(char.Inventory) do
+    for name, char in pairs(Characters.CharacterData or {}) do
+        for _, item in ipairs(char.Inventory or {}) do
             if item:lower():find(lowerItemName, 1, true) then  -- Case-insensitive fuzzy match
                 cecho(string.format("<green>The essence of '%s' lingers in %s's possession as '%s'.\n", itemName, char.ProperName, item))
                 foundItems = true
