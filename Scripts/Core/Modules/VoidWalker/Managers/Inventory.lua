@@ -3,6 +3,10 @@ local Characters = AshraelPackage.VoidWalker.Characters  -- Access to character 
 
 Characters.CharacterData = Characters.CharacterData or {}
 
+-- Flags to manage blocking between Inventory and Voidwalking processes
+Inventory.isUpdating = false
+Characters.isSwitching = false
+
 -- Helper function to retrieve and format the character name
 function Inventory.GetCharName()
     local char_name = string.lower(gmcp.Char.Status.character_name):gsub("^%l", string.upper)
@@ -29,33 +33,50 @@ function Inventory.InitializeInventory(characterName)
         cecho(string.format("<yellow>Cannot initialize inventory: %s not found in Voidwalker system.\n", characterName))
         return
     end
-    Characters.CharacterData[characterName].Inventory = Characters.CharacterData[characterName].Inventory or {}
+    Characters.CharacterData[characterName].Inventory = {}
+    cecho(string.format("<cyan>The void embraces the belongings of %s...\n", characterName))
+end
+
+-- Safe function to update inventory with a check for ongoing voidwalking
+function Inventory.SafeUpdateInventory(char_name, initial_location, depth, clearInventory)
+    if Characters.isSwitching then
+        tempTimer(0.5, function() Inventory.SafeUpdateInventory(char_name, initial_location, depth, clearInventory) end)
+    else
+        Inventory.UpdateInventory(char_name, initial_location, depth, clearInventory)
+    end
 end
 
 -- Main function to start inventory update using a queue-based traversal
-function Inventory.UpdateInventory(char_name, initial_location, depth)
-    depth = depth or 1
+function Inventory.UpdateInventory(char_name, initial_location, depth, clearInventory)
+    if Characters.isSwitching then
+        Inventory.SafeUpdateInventory(char_name, initial_location, depth, clearInventory)
+        return
+    end
 
-    -- Only proceed if the character is registered
+    Inventory.isUpdating = true
+
     if not Inventory.IsCharacterRegistered(char_name) then
+        Inventory.isUpdating = false
         return
     end
 
-    -- Initialize inventory only if it doesn't exist
-    Characters.CharacterData[char_name].Inventory = Characters.CharacterData[char_name].Inventory or {}
+    -- Clear inventory only if this is a fresh update (e.g., not during a switch)
+    if clearInventory then
+        Characters.CharacterData[char_name].Inventory = {}
+    end
 
-    -- Avoid going too deep in recursion
+    depth = depth or 1
     if depth > 5 then
+        Inventory.isUpdating = false
         return
     end
 
-    -- Reset processed containers and queue for a fresh inventory update
     Inventory.processedContainers = {}
     Inventory.containerQueue = { { location = initial_location or "inv", containerName = "main inventory" } }
 
-    -- Function to process next container in queue
     local function ProcessNextContainer()
         if #Inventory.containerQueue == 0 then
+            Inventory.isUpdating = false
             return
         end
 
@@ -71,7 +92,6 @@ function Inventory.UpdateInventory(char_name, initial_location, depth)
         Inventory.processedContainers[location] = true
         sendGMCP("Char.Items.Contents " .. location)
 
-        -- Timer to wait for GMCP data to populate and then process it
         tempTimer(1, function()
             local gmcpData = gmcp.Char.Items
             if not gmcpData or not gmcpData.List or gmcpData.List.location ~= location then
@@ -79,11 +99,9 @@ function Inventory.UpdateInventory(char_name, initial_location, depth)
                 return
             end
 
-            -- Process items in the container
             for _, item in ipairs(gmcpData.List.items) do
                 item.name = RemoveColourCodes(item.name)
 
-                -- Save item to character inventory, with additional `container` field
                 table.insert(Characters.CharacterData[char_name].Inventory, {
                     id = item.id,
                     name = item.name,
@@ -92,34 +110,20 @@ function Inventory.UpdateInventory(char_name, initial_location, depth)
                     container = containerName
                 })
 
-                -- Add containers to the queue if they are open and haven't been processed
                 if item.type == "container" and item.state == "open" and not Inventory.processedContainers[item.id] then
                     table.insert(Inventory.containerQueue, { location = item.id, containerName = item.name })
                 end
             end
 
-            -- Proceed to next container in the queue
             ProcessNextContainer()
         end)
     end
 
-    -- Initial attempt to fetch inventory using Char.Items.Inv
     if depth == 1 then
         sendGMCP("Char.Items.Inv")
-        tempTimer(1, ProcessNextContainer)  -- Start processing with the initial location in the queue
+        tempTimer(1, ProcessNextContainer)
     else
         ProcessNextContainer()
-    end
-end
-
--- Show consolidated inventory across all registered characters
-function Inventory.ShowConsolidatedInventory()
-    cecho("<cyan>Consolidated Inventory for All Characters:\n")
-    for char_name, char_data in pairs(Characters.CharacterData) do
-        for _, item in ipairs(char_data.Inventory or {}) do
-            cecho(string.format("<green>%s<reset>: %s (Type: %s, Container: %s)\n",
-                char_name, item.name, item.type or "N/A", item.container or "main inventory"))
-        end
     end
 end
 
@@ -131,49 +135,52 @@ function Inventory.ShowCharacterInventory(character_name)
         return
     end
 
-    cecho("<cyan>Inventory for " .. character_name .. ":\n")
+    cecho(string.format("<cyan>Inventory for %s:\n", character_name))
     for _, item in ipairs(char_data.Inventory or {}) do
         cecho(string.format("<green>%s<reset>: %s (Type: %s, Container: %s)\n",
             character_name, item.name, item.type or "N/A", item.container or "main inventory"))
     end
 end
 
--- Search for an item across all characters' inventories
+-- Display a consolidated inventory view of all items across all characters
+function Inventory.ShowConsolidatedInventory()
+    cecho("<cyan>The void reveals all treasures scattered across your essence...\n")
+    for char_name, char_data in pairs(Characters.CharacterData) do
+        for _, item in ipairs(char_data.Inventory or {}) do
+            cecho(string.format("<green>%s<reset>: %s (Container: %s)\n",
+                char_name, item.name, item.container or "main inventory"))
+        end
+    end
+    cecho("<magenta>The echoes of the void fade, inventory list complete.\n")
+end
+
+-- Search for an item across all characters' inventories with immersive void-themed messaging
 function Inventory.SearchItem(item_name)
-    cecho("<cyan>Searching for '" .. item_name .. "' across all character inventories:\n")
+    cecho("<cyan>Reaching into the depths of the void for '" .. item_name .. "'...\n")
+    local found_items = {}
+    item_name = string.lower(item_name)
 
     for char_name, char_data in pairs(Characters.CharacterData) do
         for _, item in ipairs(char_data.Inventory or {}) do
-            if string.find(string.lower(item.name), string.lower(item_name)) then
-                cecho(string.format("<green>%s<reset>: %s (Type: %s, State: %s, Container: %s)\n",
-                    char_name, item.name, item.type or "N/A", item.state or "N/A", item.container or "main inventory"))
+            if string.find(string.lower(item.name), item_name) then
+                table.insert(found_items, {
+                    character = char_name,
+                    name = item.name,
+                    type = item.type,
+                    state = item.state,
+                    container = item.container
+                })
             end
         end
     end
-end
 
--- Start an auto-update timer to refresh inventory periodically
-function Inventory.StartAutoUpdate(interval)
-    interval = interval or 30
-    if Inventory.autoUpdateTimer then
-        killTimer(Inventory.autoUpdateTimer)
-    end
-    Inventory.autoUpdateTimer = tempTimer(interval, function()
-        if Connected() then
-            local char_name = Inventory.GetCharName()
-            Inventory.processedContainers = {}
-            Inventory.UpdateInventory(char_name, "inv")
+    if #found_items > 0 then
+        cecho("<magenta>The void reveals the following items:\n")
+        for _, item in ipairs(found_items) do
+            cecho(string.format("<green>%s<reset>: %s (Type: %s, State: %s, Container: %s)\n",
+                item.character, item.name, item.type or "N/A", item.state or "N/A", item.container or "main inventory"))
         end
-    end, true)
-end
-
--- Stops the auto-update timer
-function Inventory.StopAutoUpdate()
-    if Inventory.autoUpdateTimer then
-        killTimer(Inventory.autoUpdateTimer)
-        Inventory.autoUpdateTimer = nil
+    else
+        cecho("<yellow>The void remains silent; no items found matching '" .. item_name .. "'.\n")
     end
 end
-
--- Start the auto-update timer for inventory updates
-Inventory.StartAutoUpdate(30)
