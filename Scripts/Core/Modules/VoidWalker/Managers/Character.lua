@@ -25,7 +25,7 @@ function Characters.StartSuppressingOutput()
     Characters.SuppressTrigger = tempLineTrigger(1, 1000, function()
         deleteLine()  -- Hide each incoming line
     end)
-    cecho("<cyan>Hiding output during voidwalk transition...\n")
+    cecho("<cyan>The mists of the void conceal all...\n")
 
     -- Set a trigger to detect the specific line that ends suppression
     Characters.SuppressStopTrigger = tempRegexTrigger("Last logged in from .+ on .+", function()
@@ -50,15 +50,15 @@ end
 function Characters.EnsureCurrentPlayerRegistered()
     local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name
     if not currentName then
-        cecho("<red>Error: Could not determine character name from GMCP data.\n")
+        cecho("<red>Your presence cannot be detected. The void denies access.\n")
         return false
     end
 
     currentName = properCase(currentName)
 
     if not Characters.CharacterData[currentName] or not Characters.CharacterData[currentName].IsRegistered then
-        cecho(string.format("<yellow>You are not registered in the Voidwalker system as %s.\n", currentName))
-        cecho("<yellow>Please use 'voidwalk register <password>' to complete registration.\n")
+        cecho(string.format("<yellow>You have yet to be bound to the Voidwalker system as %s.\n", currentName))
+        cecho("<yellow>Enter 'voidwalk register <password>' to seal your connection.\n")
         return false
     end
 
@@ -68,8 +68,6 @@ end
 -- Register a character for voidwalking with a provided password
 function Characters.RegisterCharacter(name, password)
     name = properCase(name)
-    cecho(string.format("<cyan>Registering character %s for Voidwalker...\n", name))
-
     Characters.CharacterData[name] = {
         Password = password,
         Stats = {},
@@ -79,22 +77,17 @@ function Characters.RegisterCharacter(name, password)
         IsRegistered = true
     }
 
-    if Characters.CharacterData[name] and Characters.CharacterData[name].IsRegistered then
-        cecho(string.format("<green>Character %s has been registered successfully.\n", name))
-    else
-        cecho("<red>[ERROR] Registration failed to save for character " .. name .. "\n")
-    end
+    cecho(string.format("<cyan>Your essence, %s, is now etched into the void.\n", name))
 end
 
 -- Add a character to the system
 function Characters.AddCharacter(name, password)
     if not Characters.EnsureCurrentPlayerRegistered() then
-        cecho("<red>You must register your current character before adding others.\n")
+        cecho("<red>The veil of the void requires your registration before adding others.\n")
         return
     end
 
     name = properCase(name)
-
     Characters.CharacterData[name] = {
         Password = password,
         Stats = {},
@@ -104,11 +97,7 @@ function Characters.AddCharacter(name, password)
         IsRegistered = true
     }
 
-    if Characters.CharacterData[name] and Characters.CharacterData[name].IsRegistered then
-        cecho(string.format("<green>Character %s has been added and registered.\n", name))
-    else
-        cecho("<red>[ERROR] Failed to save data for character " .. name .. "\n")
-    end
+    cecho(string.format("<cyan>%s has been inscribed upon the void.\n", name))
 end
 
 -- Remove a character from the system
@@ -117,9 +106,9 @@ function Characters.RemoveCharacter(name)
 
     if Characters.CharacterData[name] then
         Characters.CharacterData[name] = nil
-        cecho(string.format("<red>Character %s has been removed.\n", name))
+        cecho(string.format("<red>%s has been erased from the void.\n", name))
     else
-        cecho(string.format("<yellow>Character %s does not exist.\n", name))
+        cecho(string.format("<yellow>No trace of %s exists within the void.\n", name))
     end
 end
 
@@ -130,7 +119,7 @@ function Characters.UpdateActiveStatus(currentName)
     for name, charData in pairs(Characters.CharacterData) do
         charData.IsActive = (name == currentName)
     end
-    cecho(string.format("<cyan>Character %s set as active.\n", currentName))
+    cecho(string.format("<cyan>Your presence as %s resonates within the void.\n", currentName))
 end
 
 -- Function to be called after successful login
@@ -139,7 +128,6 @@ function Characters.HandleLogin(name)
     Characters.UpdateActiveStatus(name)
     Characters.IsSwitching = false
     Characters.DisplayVoidwalkingMessage()  -- Show immersive message upon login
-    cecho(string.format("<green>Successfully logged in as %s and set as active.\n", name))
 end
 
 -- Display immersive voidwalking message with expanded format
@@ -160,18 +148,22 @@ end
 function Characters.SwitchCharacter(name)
     local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name
     if not currentName then
-        cecho("<red>Error: Could not determine character name from GMCP data.\n")
+        cecho("<red>Your essence cannot be discerned. The void denies access.\n")
         return
     end
 
     currentName = properCase(currentName)
     name = properCase(name)
 
+    if currentName == name then
+        cecho("<magenta>The void shudders. You cannot voidwalk into your own reflection.\n")
+        return
+    end
+
     if Characters.CharacterData[currentName] then
         Characters.UpdateCharacterData(currentName)
-        cecho(string.format("<cyan>Updated data for current character: %s.\n", currentName))
     else
-        cecho(string.format("<yellow>Current character %s is not registered in Voidwalker.\n", currentName))
+        cecho(string.format("<yellow>No trace of %s exists within the void.\n", currentName))
         return
     end
 
@@ -179,7 +171,7 @@ function Characters.SwitchCharacter(name)
     if char and char.IsRegistered then
         if not Characters.IsSwitching then
             Characters.IsSwitching = true
-            cecho(string.format("<magenta>Switching to character: %s...\n", name))
+            cecho(string.format("<magenta>Reaching across the void to manifest as %s...\n", name))
             
             Characters.StartSuppressingOutput()  -- Start suppressing output
             send("quit")
@@ -195,18 +187,16 @@ function Characters.SwitchCharacter(name)
                         send(char.Password)
                         Characters.HandleLogin(name)
 
-                        cecho(string.format("<green>Logged in as %s.\n", name))
-
                         if nameTrigger then killTrigger(nameTrigger) end
                         if passwordTrigger then killTrigger(passwordTrigger) end
                     end)
                 end)
             end)
         else
-            cecho("<yellow>Character switch is already in progress. Please wait.\n")
+            cecho("<yellow>The void is already in motion. Please wait.\n")
         end
     else
-        cecho(string.format("<yellow>Character %s is not registered or was not found.\n", name))
+        cecho(string.format("<yellow>The void does not recognize %s.\n", name))
     end
 end
 
@@ -215,7 +205,7 @@ function Characters.UpdateCharacterData(name)
     local charName = properCase(name)
     local char = Characters.CharacterData[charName]
     if not char then
-        cecho(string.format("<yellow>Character '%s' not found in CharacterData. Aborting update.\n", charName))
+        cecho(string.format("<yellow>No trace of %s exists within the void.\n", charName))
         return
     end
 
@@ -252,7 +242,7 @@ end
 function Characters.ListCharacters()
     cecho("<magenta>===== VOIDWALKER GAZE =====\n")
     if next(Characters.CharacterData) == nil then
-        cecho("<yellow>No characters have been registered yet.\n")
+        cecho("<yellow>The void is empty. No characters have been bound.\n")
         return
     end
 
@@ -269,7 +259,7 @@ function Characters.GetCharacterDetails(name)
     local char = Characters.CharacterData[name]
     
     if not char then
-        cecho(string.format("<yellow>Character %s not found.\n", name))
+        cecho(string.format("<yellow>The void reveals no knowledge of %s.\n", name))
         return
     end
     
@@ -277,5 +267,12 @@ function Characters.GetCharacterDetails(name)
     cecho(string.format("  Health: %s/%s, Mana: %s/%s\n", char.Stats.Health or "N/A", char.Stats.Health_Max or "N/A",
                          char.Stats.Mana or "N/A", char.Stats.Mana_Max or "N/A"))
     cecho(string.format("  Last Location: %s\n", char.LastLocation or "Unknown"))
-    cecho(string.format("  Inventory: %s\n", char.Inventory and table.concat(char.Inventory, ", ") or "None"))
+    cecho("  Inventory:\n")
+    if char.Inventory and #char.Inventory > 0 then
+        for _, item in ipairs(char.Inventory) do
+            cecho(string.format("    - %s\n", item))
+        end
+    else
+        cecho("    None\n")
+    end
 end
