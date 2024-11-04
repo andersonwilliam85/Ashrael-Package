@@ -11,14 +11,50 @@ Characters.CharacterData = Characters.CharacterData or {}
 
 -- Flag to track if a character switch is in progress
 Characters.IsSwitching = false
+Characters.SuppressTrigger = nil
+Characters.SuppressStopTrigger = nil
+
+-- Helper function to proper case names
+local function properCase(name)
+    return name:gsub("(%a)([%w_']*)", function(first, rest) return first:upper() .. rest:lower() end)
+end
+
+-- Function to start suppressing output while voidwalking
+function Characters.StartSuppressingOutput()
+    deleteFull()  -- Clear the screen initially
+    Characters.SuppressTrigger = tempLineTrigger(1, 1000, function()
+        deleteLine()  -- Hide each incoming line
+    end)
+    cecho("<cyan>Hiding output during voidwalk transition...\n")
+
+    -- Set a trigger to detect the specific line that ends suppression
+    Characters.SuppressStopTrigger = tempRegexTrigger("Last logged in from .+ on .+", function()
+        Characters.StopSuppressingOutput()  -- Stop suppression once the line is matched
+    end)
+end
+
+-- Function to stop suppressing output after voidwalking completes
+function Characters.StopSuppressingOutput()
+    if Characters.SuppressTrigger then
+        killTrigger(Characters.SuppressTrigger)
+        Characters.SuppressTrigger = nil
+    end
+    if Characters.SuppressStopTrigger then
+        killTrigger(Characters.SuppressStopTrigger)
+        Characters.SuppressStopTrigger = nil
+    end
+    deleteFull()  -- Clear the screen once more to ensure a fresh view
+end
 
 -- Ensure the current player is registered; if not, prompt for registration
 function Characters.EnsureCurrentPlayerRegistered()
-    local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name:lower()
+    local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name
     if not currentName then
         cecho("<red>Error: Could not determine character name from GMCP data.\n")
         return false
     end
+
+    currentName = properCase(currentName)
 
     if not Characters.CharacterData[currentName] or not Characters.CharacterData[currentName].IsRegistered then
         cecho(string.format("<yellow>You are not registered in the Voidwalker system as %s.\n", currentName))
@@ -31,20 +67,19 @@ end
 
 -- Register a character for voidwalking with a provided password
 function Characters.RegisterCharacter(name, password)
+    name = properCase(name)
     cecho(string.format("<cyan>Registering character %s for Voidwalker...\n", name))
 
-    Characters.CharacterData[name:lower()] = {
+    Characters.CharacterData[name] = {
         Password = password,
         Stats = {},
         ProperName = name,
-        Title = gmcp.Room.Players and gmcp.Room.Players[name] and gmcp.Room.Players[name].fullname or "",
         LastLocation = gmcp.Room.Info and gmcp.Room.Info.name or "Unknown",
-        RoomExits = gmcp.Room.Info and gmcp.Room.Info.exits or {},
         Inventory = {},
         IsRegistered = true
     }
 
-    if Characters.CharacterData[name:lower()] and Characters.CharacterData[name:lower()].IsRegistered then
+    if Characters.CharacterData[name] and Characters.CharacterData[name].IsRegistered then
         cecho(string.format("<green>Character %s has been registered successfully.\n", name))
     else
         cecho("<red>[ERROR] Registration failed to save for character " .. name .. "\n")
@@ -58,18 +93,18 @@ function Characters.AddCharacter(name, password)
         return
     end
 
-    Characters.CharacterData[name:lower()] = {
+    name = properCase(name)
+
+    Characters.CharacterData[name] = {
         Password = password,
         Stats = {},
         ProperName = name,
-        Title = "",
         LastLocation = "Unknown",
-        RoomExits = {},
         Inventory = {},
         IsRegistered = true
     }
 
-    if Characters.CharacterData[name:lower()] and Characters.CharacterData[name:lower()].IsRegistered then
+    if Characters.CharacterData[name] and Characters.CharacterData[name].IsRegistered then
         cecho(string.format("<green>Character %s has been added and registered.\n", name))
     else
         cecho("<red>[ERROR] Failed to save data for character " .. name .. "\n")
@@ -78,80 +113,59 @@ end
 
 -- Remove a character from the system
 function Characters.RemoveCharacter(name)
-    if Characters.CharacterData[name:lower()] then
-        Characters.CharacterData[name:lower()] = nil
+    name = properCase(name)
+
+    if Characters.CharacterData[name] then
+        Characters.CharacterData[name] = nil
         cecho(string.format("<red>Character %s has been removed.\n", name))
     else
         cecho(string.format("<yellow>Character %s does not exist.\n", name))
     end
 end
 
--- Get character details
-function Characters.GetCharacterDetails(name)
-    local char = Characters.CharacterData[name:lower()]
-    if char then
-        cecho("<cyan>Character: " .. (char.ProperName or name) .. "\n")
-        cecho("  Title: " .. (char.Title or "No title available") .. "\n")
-        cecho("  Health: " .. (char.Stats.Health or "N/A") .. "/" .. (char.Stats.Health_Max or "N/A") ..
-              ", Mana: " .. (char.Stats.Mana or "N/A") .. "/" .. (char.Stats.Mana_Max or "N/A") .. "\n")
-        cecho("  Last Location: " .. char.LastLocation .. "\n")
-        cecho("  Inventory: " .. (char.Inventory and table.concat(char.Inventory, ", ") or "None") .. "\n")
-    else
-        cecho(string.format("<yellow>Character %s not found.\n", name))
-    end
-end
-
--- List all characters in the system
-function Characters.ListCharacters()
-    if next(Characters.CharacterData) == nil then
-        cecho("<yellow>No characters added yet.\n")
-        return
-    end
-
-    for name, char in pairs(Characters.CharacterData) do
-        local primaryStatus = char.isPrimary and "<green>[Active]<reset> " or ""
-        cecho(string.format("<blue>%s%s - Title: %s, Last Location: %s\n", 
-              primaryStatus, (char.ProperName or name), (char.Title or "No title"), (char.LastLocation or "Unknown")))
-    end
-end
-
--- Set the primary (active) character in CharacterData
-function Characters.UpdatePrimaryStatus(currentName)
+-- Set the active character in CharacterData
+function Characters.UpdateActiveStatus(currentName)
+    currentName = properCase(currentName)
+    
     for name, charData in pairs(Characters.CharacterData) do
-        charData.isPrimary = (name == currentName:lower())
+        charData.IsActive = (name == currentName)
     end
-    cecho(string.format("<cyan>Character %s set as primary.\n", currentName))
+    cecho(string.format("<cyan>Character %s set as active.\n", currentName))
 end
 
 -- Function to be called after successful login
 function Characters.HandleLogin(name)
-    Characters.UpdatePrimaryStatus(name)
+    name = properCase(name)
+    Characters.UpdateActiveStatus(name)
     Characters.IsSwitching = false
-    Characters.DisplayVoidwalkingMessage()  -- Display immersive login message
-    cecho(string.format("<green>Successfully logged in as %s and set as primary.\n", name))
+    Characters.DisplayVoidwalkingMessage()  -- Show immersive message upon login
+    cecho(string.format("<green>Successfully logged in as %s and set as active.\n", name))
 end
 
--- Display immersive voidwalking message with periods and dashes
+-- Display immersive voidwalking message with expanded format
 function Characters.DisplayVoidwalkingMessage()
-    checho("\n")
-    cecho("<magenta>------------------------------------------------------\n")
+    cecho("<magenta>=====================================================================================\n")
     cecho("<cyan>   .................................................\n")
-    cecho("<cyan>   ..       You step into the void...             ..\n")
-    cecho("<cyan>   ..       Time and space slip away.             ..\n")
-    cecho("<cyan>   ..     Re-emerging in another form.            ..\n")
+    cecho("<cyan>   ..                                               ..\n")
+    cecho("<cyan>   ..      You are enveloped in a swirling void...  ..\n")
+    cecho("<cyan>   ..       Time and space blur around you...       ..\n")
+    cecho("<cyan>   ..        You feel your essence shift...         ..\n")
+    cecho("<cyan>   ..       Re-emerging in a new form, anew.        ..\n")
+    cecho("<cyan>   ..                                               ..\n")
     cecho("<cyan>   .................................................\n")
-    cecho("<magenta>------------------------------------------------------\n\n")
-    checho("\n")
+    cecho("<magenta>=====================================================================================\n\n")
 end
-
 
 -- Switch to a specified character by name
 function Characters.SwitchCharacter(name)
-    local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name:lower()
+    local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name
     if not currentName then
-        cecho("<red>Error: Could not determine current character name from GMCP data.\n")
+        cecho("<red>Error: Could not determine character name from GMCP data.\n")
         return
     end
+
+    currentName = properCase(currentName)
+    name = properCase(name)
 
     if Characters.CharacterData[currentName] then
         Characters.UpdateCharacterData(currentName)
@@ -161,12 +175,13 @@ function Characters.SwitchCharacter(name)
         return
     end
 
-    local char = Characters.CharacterData[name:lower()]
+    local char = Characters.CharacterData[name]
     if char and char.IsRegistered then
         if not Characters.IsSwitching then
             Characters.IsSwitching = true
             cecho(string.format("<magenta>Switching to character: %s...\n", name))
-
+            
+            Characters.StartSuppressingOutput()  -- Start suppressing output
             send("quit")
             local nameTrigger, passwordTrigger
 
@@ -197,14 +212,12 @@ end
 
 -- Utility to update character data from GMCP
 function Characters.UpdateCharacterData(name)
-    local charName = name:lower()
+    local charName = properCase(name)
     local char = Characters.CharacterData[charName]
     if not char then
-        cecho(string.format("<yellow>[DEBUG] Character '%s' not found in CharacterData. Aborting update.\n", charName))
+        cecho(string.format("<yellow>Character '%s' not found in CharacterData. Aborting update.\n", charName))
         return
     end
-
-    cecho(string.format("<cyan>[DEBUG] Updating GMCP data for character '%s'...\n", charName))
 
     if gmcp.Char.Vitals then
         char.Stats = {
@@ -221,7 +234,6 @@ function Characters.UpdateCharacterData(name)
 
     if gmcp.Room.Info then
         char.LastLocation = gmcp.Room.Info.name or char.LastLocation
-        char.RoomExits = gmcp.Room.Info.exits or char.RoomExits
     end
 
     if gmcp.Char.Items.List and gmcp.Char.Items.List.items then
@@ -233,6 +245,37 @@ function Characters.UpdateCharacterData(name)
 
     if gmcp.Char.Status then
         char.ProperName = gmcp.Char.Status.character_name or char.ProperName
-        char.Title = gmcp.Room.Players[charName] and gmcp.Room.Players[charName].fullname or char.Title
     end
+end
+
+-- List all characters in the system (VoidGaze function)
+function Characters.ListCharacters()
+    cecho("<magenta>===== VOIDWALKER GAZE =====\n")
+    if next(Characters.CharacterData) == nil then
+        cecho("<yellow>No characters have been registered yet.\n")
+        return
+    end
+
+    for name, char in pairs(Characters.CharacterData) do
+        local status = char.IsActive and "<green>[Active]" or "<yellow>[Inactive]"
+        cecho(string.format("<cyan>%s %s - Last Location: %s\n", status, char.ProperName, char.LastLocation or "Unknown"))
+    end
+    cecho("<magenta>===========================\n")
+end
+
+-- Get detailed character information
+function Characters.GetCharacterDetails(name)
+    name = properCase(name)
+    local char = Characters.CharacterData[name]
+    
+    if not char then
+        cecho(string.format("<yellow>Character %s not found.\n", name))
+        return
+    end
+    
+    cecho(string.format("<cyan>Character: %s\n", char.ProperName))
+    cecho(string.format("  Health: %s/%s, Mana: %s/%s\n", char.Stats.Health or "N/A", char.Stats.Health_Max or "N/A",
+                         char.Stats.Mana or "N/A", char.Stats.Mana_Max or "N/A"))
+    cecho(string.format("  Last Location: %s\n", char.LastLocation or "Unknown"))
+    cecho(string.format("  Inventory: %s\n", char.Inventory and table.concat(char.Inventory, ", ") or "None"))
 end
