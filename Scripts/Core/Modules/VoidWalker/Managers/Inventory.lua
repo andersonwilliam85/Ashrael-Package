@@ -1,43 +1,60 @@
--- AshraelPackage.VoidWalker.Inventory
+-- Define the AshraelPackage.VoidWalker.Inventory namespace
 AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
 AshraelPackage.VoidWalker.Inventory = AshraelPackage.VoidWalker.Inventory or {}
 
 local Inventory = AshraelPackage.VoidWalker.Inventory
+local Characters = AshraelPackage.VoidWalker.Characters  -- Access to character data
 
--- Consolidate and display the inventory of all characters
+-- Consolidate and display the inventory of all characters with a note on who is carrying each item
 function Inventory.ShowConsolidatedInventory()
-    cecho("<cyan>Function Call: ShowConsolidatedInventory\n")
+    cecho("<magenta>The void stirs, consolidating possessions across all bound souls...\n")
     local consolidatedInventory = {}
-    for name, char in pairs(Characters.characterData) do
-        for _, item in ipairs(char.inventory) do
-            consolidatedInventory[item] = (consolidatedInventory[item] or 0) + 1
+
+    -- Gather items from each character's inventory, noting who is carrying each
+    for name, char in pairs(Characters.CharacterData) do
+        for _, item in ipairs(char.Inventory) do
+            consolidatedInventory[item] = consolidatedInventory[item] or {}
+            table.insert(consolidatedInventory[item], char.ProperName)
         end
     end
 
-    cecho("<cyan>Consolidated Inventory:\n")
-    for item, count in pairs(consolidatedInventory) do
-        cecho("  " .. item .. ": " .. count .. "\n")
+    -- Display the consolidated inventory with immersive messaging
+    if next(consolidatedInventory) then
+        cecho("<cyan>The essence of all items manifests within the void:\n")
+        for item, carriers in pairs(consolidatedInventory) do
+            local carrierList = table.concat(carriers, ", ")
+            cecho(string.format("  - %s: carried by %s\n", item, carrierList))
+        end
+    else
+        cecho("<yellow>The void reveals no belongings; it lies empty and waiting.\n")
     end
 end
 
--- Search for an item across all character inventories
+-- Search for an item across all character inventories with fuzzy matching
 function Inventory.SearchItem(itemName)
-    cecho("<cyan>Function Call: SearchItem - Searching for item: " .. itemName .. "\n")
+    cecho("<magenta>The void whispers, seeking the presence of '" .. itemName .. "'...\n")
     local foundItems = false
-    for name, char in pairs(Characters.characterData) do
-        if table.contains(char.inventory, itemName) then
-            cecho("<green>" .. itemName .. " found in character " .. name .. "'s inventory.\n")
-            foundItems = true
+    local lowerItemName = itemName:lower()
+
+    -- Search each character's inventory for items that include the specified name
+    for name, char in pairs(Characters.CharacterData) do
+        for _, item in ipairs(char.Inventory) do
+            if item:lower():find(lowerItemName, 1, true) then  -- Case-insensitive fuzzy match
+                cecho(string.format("<green>The essence of '%s' lingers in %s's possession as '%s'.\n", itemName, char.ProperName, item))
+                foundItems = true
+            end
         end
     end
+
+    -- Display message if item is not found in any inventory
     if not foundItems then
-        cecho("<red>Item " .. itemName .. " not found in any character's inventory.\n")
+        cecho("<red>The void offers no trace of '" .. itemName .. "' among any soul's belongings.\n")
     end
 end
 
--- Placeholder for future inventory functionality
+-- Placeholder for future functionality to add items to a character's inventory
 function Inventory.AddItemToCharacter(name, item)
-    cecho("<cyan>Function Call: AddItemToCharacter - Adding item " .. item .. " to character " .. name .. "\n")
-    -- Placeholder for actual add item behavior
-    cecho("<magenta>Adding item " .. item .. " to character " .. name .. " (not yet implemented).\n")
+    cecho(string.format("<cyan>The void hums as '%s' is offered to %s's essence.\n", item, properCase(name)))
+    -- Placeholder for the actual item addition logic, if implemented in the future
+    cecho("<magenta>The offering has been noted, but the power to bestow it is not yet unlocked.\n")
 end
