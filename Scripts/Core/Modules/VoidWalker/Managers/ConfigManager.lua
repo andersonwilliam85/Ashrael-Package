@@ -1,4 +1,4 @@
-local Config = AshraelPackage.VoidWalker.Config
+local Config = AshraelPackage.VoidWalker.Managers.ConfigManager
 
 -- Placeholder function to set configuration
 function Config.SetConfig(option, value)

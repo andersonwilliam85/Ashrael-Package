@@ -5,18 +5,10 @@ local InventoryDA = AshraelPackage.VoidWalker.DataAccessors.InventoryDA
 -- Flags to manage blocking between Inventory and Voidwalking processes
 InventoryManager.isUpdating = false
 
--- Helper function to retrieve and format the character name
+-- Retrieve and format the character name
 function InventoryManager.GetCharName()
     local char_name = string.lower(gmcp.Char.Status.character_name):gsub("^%l", string.upper)
     return char_name ~= "" and char_name or "Unknown"
-end
-
--- Helper to remove color codes from item names
-local function RemoveColourCodes(name)
-    name = string.gsub(name, "\27%[%d+;%d+m", "")
-    name = string.gsub(name, "\27", "")
-    name = string.gsub(name, "|%w+|", "")
-    return name
 end
 
 -- Checks if a character is registered in the VoidWalker system
@@ -31,7 +23,7 @@ function InventoryManager.InitializeInventory(characterName)
         cecho(string.format("<yellow>Cannot initialize inventory: %s not found in Voidwalker system.\n", characterName))
         return
     end
-    InventoryManager.ClearInventory(characterName)
+    InventoryDA.ClearInventory(characterName)
     cecho(string.format("<cyan>The void embraces the belongings of %s...\n", characterName))
 end
 
@@ -40,7 +32,7 @@ function InventoryManager.ClearInventory(character_name)
     InventoryDA.ClearInventory(character_name)
 end
 
--- Main function to start inventory update, using a queue-based traversal
+-- Main function to start inventory update by calling the DA
 function InventoryManager.UpdateInventory(char_name, initial_location, depth, clearInventory)
     if InventoryManager.isUpdating then return end
     InventoryManager.isUpdating = true
@@ -55,68 +47,8 @@ function InventoryManager.UpdateInventory(char_name, initial_location, depth, cl
         InventoryManager.ClearInventory(char_name)
     end
 
-    depth = depth or 1
-    if depth > 5 then
-        InventoryManager.isUpdating = false
-        return
-    end
-
-    -- Queue-based container processing for inventory traversal
-    local containerQueue = { { location = initial_location or "inv", containerName = "main inventory" } }
-    local processedContainers = {}
-
-    local function ProcessNextContainer()
-        if #containerQueue == 0 then
-            InventoryManager.isUpdating = false
-            return
-        end
-
-        local container = table.remove(containerQueue, 1)
-        local location = container.location
-        local containerName = container.containerName
-
-        if processedContainers[location] then
-            ProcessNextContainer()
-            return
-        end
-
-        processedContainers[location] = true
-        sendGMCP("Char.Items.Contents " .. location)
-
-        tempTimer(1, function()
-            local gmcpData = gmcp.Char.Items
-            if not gmcpData or not gmcpData.List or gmcpData.List.location ~= location then
-                ProcessNextContainer()
-                return
-            end
-
-            for _, item in ipairs(gmcpData.List.items) do
-                item.name = RemoveColourCodes(item.name)
-
-                -- Add item directly to the database
-                InventoryDA.AddItem(char_name, {
-                    id = item.id,
-                    name = item.name,
-                    type = item.type,
-                    state = item.state,
-                    container = containerName
-                })
-
-                if item.type == "container" and item.state == "open" and not processedContainers[item.id] then
-                    table.insert(containerQueue, { location = item.id, containerName = item.name })
-                end
-            end
-
-            ProcessNextContainer()
-        end)
-    end
-
-    if depth == 1 then
-        sendGMCP("Char.Items.Inv")
-        tempTimer(1, ProcessNextContainer)
-    else
-        ProcessNextContainer()
-    end
+    InventoryDA.UpdateInventoryFromGMCP(char_name, initial_location, depth)
+    InventoryManager.isUpdating = false
 end
 
 -- Show inventory details for a specific character
@@ -172,3 +104,6 @@ function InventoryManager.SearchItem(item_name)
         cecho("<yellow>The void remains silent; no items found matching '" .. item_name .. "'.\n")
     end
 end
+
+AshraelPackage.VoidWalker.Managers.InventoryManager = InventoryManager
+return InventoryManager
