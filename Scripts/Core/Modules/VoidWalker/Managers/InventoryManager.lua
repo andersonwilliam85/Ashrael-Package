@@ -1,14 +1,12 @@
-local Inventory = AshraelPackage.VoidWalker.Inventory
-local Characters = AshraelPackage.VoidWalker.Characters  -- Access to character data
-
-Characters.CharacterData = Characters.CharacterData or {}
+local InventoryManager = AshraelPackage.VoidWalker.Managers.InventoryManager
+local CharactersDA = AshraelPackage.VoidWalker.DataAccessors.CharactersDA
+local InventoryDA = AshraelPackage.VoidWalker.DataAccessors.InventoryDA
 
 -- Flags to manage blocking between Inventory and Voidwalking processes
-Inventory.isUpdating = false
-Characters.isSwitching = false
+InventoryManager.isUpdating = false
 
 -- Helper function to retrieve and format the character name
-function Inventory.GetCharName()
+function InventoryManager.GetCharName()
     local char_name = string.lower(gmcp.Char.Status.character_name):gsub("^%l", string.upper)
     return char_name ~= "" and char_name or "Unknown"
 end
@@ -22,74 +20,67 @@ local function RemoveColourCodes(name)
 end
 
 -- Checks if a character is registered in the VoidWalker system
-function Inventory.IsCharacterRegistered(char_name)
-    return Characters.CharacterData[char_name] ~= nil
+function InventoryManager.IsCharacterRegistered(char_name)
+    return CharactersDA.GetCharacter(char_name) ~= nil
 end
 
 -- Initialize the inventory for a character by name
-function Inventory.InitializeInventory(characterName)
+function InventoryManager.InitializeInventory(characterName)
     characterName = characterName:gsub("^%l", string.upper)
-    if not Characters.CharacterData[characterName] then
+    if not InventoryManager.IsCharacterRegistered(characterName) then
         cecho(string.format("<yellow>Cannot initialize inventory: %s not found in Voidwalker system.\n", characterName))
         return
     end
-    Characters.CharacterData[characterName].Inventory = {}
+    InventoryManager.ClearInventory(characterName)
     cecho(string.format("<cyan>The void embraces the belongings of %s...\n", characterName))
 end
 
--- Safe function to update inventory with a check for ongoing voidwalking
-function Inventory.SafeUpdateInventory(char_name, initial_location, depth, clearInventory)
-    if Characters.isSwitching then
-        tempTimer(0.5, function() Inventory.SafeUpdateInventory(char_name, initial_location, depth, clearInventory) end)
-    else
-        Inventory.UpdateInventory(char_name, initial_location, depth, clearInventory)
-    end
+-- Clear Inventory for a Character in the database
+function InventoryManager.ClearInventory(character_name)
+    InventoryDA.ClearInventory(character_name)
 end
 
--- Main function to start inventory update using a queue-based traversal
-function Inventory.UpdateInventory(char_name, initial_location, depth, clearInventory)
-    if Characters.isSwitching then
-        Inventory.SafeUpdateInventory(char_name, initial_location, depth, clearInventory)
+-- Main function to start inventory update, using a queue-based traversal
+function InventoryManager.UpdateInventory(char_name, initial_location, depth, clearInventory)
+    if InventoryManager.isUpdating then return end
+    InventoryManager.isUpdating = true
+
+    if not InventoryManager.IsCharacterRegistered(char_name) then
+        InventoryManager.isUpdating = false
         return
     end
 
-    Inventory.isUpdating = true
-
-    if not Inventory.IsCharacterRegistered(char_name) then
-        Inventory.isUpdating = false
-        return
-    end
-
-    -- Clear inventory only if this is a fresh update (e.g., not during a switch)
+    -- Clear inventory if this is a fresh update
     if clearInventory then
-        Characters.CharacterData[char_name].Inventory = {}
+        InventoryManager.ClearInventory(char_name)
     end
 
     depth = depth or 1
     if depth > 5 then
-        Inventory.isUpdating = false
+        InventoryManager.isUpdating = false
         return
     end
 
-    Inventory.processedContainers = {}
-    Inventory.containerQueue = { { location = initial_location or "inv", containerName = "main inventory" } }
+    -- Queue-based container processing for inventory traversal
+    local containerQueue = { { location = initial_location or "inv", containerName = "main inventory" } }
+    local processedContainers = {}
 
     local function ProcessNextContainer()
-        if #Inventory.containerQueue == 0 then
-            Inventory.isUpdating = false
+        if #containerQueue == 0 then
+            InventoryManager.isUpdating = false
             return
         end
 
-        local container = table.remove(Inventory.containerQueue, 1)
+        local container = table.remove(containerQueue, 1)
         local location = container.location
         local containerName = container.containerName
 
-        if Inventory.processedContainers[location] then
+        if processedContainers[location] then
             ProcessNextContainer()
             return
         end
 
-        Inventory.processedContainers[location] = true
+        processedContainers[location] = true
         sendGMCP("Char.Items.Contents " .. location)
 
         tempTimer(1, function()
@@ -102,7 +93,8 @@ function Inventory.UpdateInventory(char_name, initial_location, depth, clearInve
             for _, item in ipairs(gmcpData.List.items) do
                 item.name = RemoveColourCodes(item.name)
 
-                table.insert(Characters.CharacterData[char_name].Inventory, {
+                -- Add item directly to the database
+                InventoryDA.AddItem(char_name, {
                     id = item.id,
                     name = item.name,
                     type = item.type,
@@ -110,8 +102,8 @@ function Inventory.UpdateInventory(char_name, initial_location, depth, clearInve
                     container = containerName
                 })
 
-                if item.type == "container" and item.state == "open" and not Inventory.processedContainers[item.id] then
-                    table.insert(Inventory.containerQueue, { location = item.id, containerName = item.name })
+                if item.type == "container" and item.state == "open" and not processedContainers[item.id] then
+                    table.insert(containerQueue, { location = item.id, containerName = item.name })
                 end
             end
 
@@ -128,43 +120,39 @@ function Inventory.UpdateInventory(char_name, initial_location, depth, clearInve
 end
 
 -- Show inventory details for a specific character
-function Inventory.ShowCharacterInventory(character_name)
-    local char_data = Characters.CharacterData[character_name]
-    if not char_data then
-        cecho("<red>Error: Character '" .. character_name .. "' is not registered.\n")
-        return
-    end
-
+function InventoryManager.ShowCharacterInventory(character_name)
+    local inventoryItems = InventoryDA.GetInventory(character_name)
     cecho(string.format("<cyan>Inventory for %s:\n", character_name))
-    for _, item in ipairs(char_data.Inventory or {}) do
+    for _, item in ipairs(inventoryItems) do
         cecho(string.format("<green>%s<reset>: %s (Type: %s, Container: %s)\n",
             character_name, item.name, item.type or "N/A", item.container or "main inventory"))
     end
 end
 
 -- Display a consolidated inventory view of all items across all characters
-function Inventory.ShowConsolidatedInventory()
+function InventoryManager.ShowConsolidatedInventory()
     cecho("<cyan>The void reveals all treasures scattered across your essence...\n")
-    for char_name, char_data in pairs(Characters.CharacterData) do
-        for _, item in ipairs(char_data.Inventory or {}) do
+    for _, charData in ipairs(CharactersDA.GetAllCharacters()) do
+        local inventoryItems = InventoryDA.GetInventory(charData.name)
+        for _, item in ipairs(inventoryItems) do
             cecho(string.format("<green>%s<reset>: %s (Container: %s)\n",
-                char_name, item.name, item.container or "main inventory"))
+                charData.name, item.name, item.container or "main inventory"))
         end
     end
     cecho("<magenta>The echoes of the void fade, inventory list complete.\n")
 end
 
--- Search for an item across all characters' inventories with immersive void-themed messaging
-function Inventory.SearchItem(item_name)
+-- Search for an item across all characters' inventories
+function InventoryManager.SearchItem(item_name)
     cecho("<cyan>Reaching into the depths of the void for '" .. item_name .. "'...\n")
     local found_items = {}
     item_name = string.lower(item_name)
 
-    for char_name, char_data in pairs(Characters.CharacterData) do
-        for _, item in ipairs(char_data.Inventory or {}) do
+    for _, charData in ipairs(CharactersDA.GetAllCharacters()) do
+        for _, item in ipairs(InventoryDA.GetInventory(charData.name)) do
             if string.find(string.lower(item.name), item_name) then
                 table.insert(found_items, {
-                    character = char_name,
+                    character = charData.name,
                     name = item.name,
                     type = item.type,
                     state = item.state,

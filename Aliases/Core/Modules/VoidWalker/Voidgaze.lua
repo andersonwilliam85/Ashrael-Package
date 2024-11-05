@@ -1,19 +1,19 @@
 -- Regex Triggers:
 -- ^voidgaze(?:\s+(\w+)(?:\s+(.*))?)?$
 
-AshraelPackage = AshraelPackage or {}
+buAshraelPackage = AshraelPackage or {}
 AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
 
 local VoidWalker = AshraelPackage.VoidWalker
-local Characters = AshraelPackage.VoidWalker.Characters
-local Inventory = AshraelPackage.VoidWalker.Inventory
+local Characters = AshraelPackage.VoidWalker.Managers.CharactersManager
+local Inventory = AshraelPackage.VoidWalker.Managers.InventoryManager
 
 -- `voidgaze` command handler
 function VoidWalker.HandleVoidgazeCommand(subCommand, option)
     if subCommand == "help" then
         VoidWalker.DisplayHelp()
     elseif not subCommand or subCommand == "list" then
-        Characters.ListCharacters()
+        Characters.GetAllCharacters()
     elseif subCommand == "inventory" or subCommand == "inv" then
         Inventory.ShowConsolidatedInventory()
     elseif subCommand == "search" and option then

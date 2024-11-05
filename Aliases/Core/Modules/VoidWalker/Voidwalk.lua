@@ -5,8 +5,8 @@ AshraelPackage = AshraelPackage or {}
 AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
 
 local VoidWalker = AshraelPackage.VoidWalker
-local Characters = AshraelPackage.VoidWalker.Characters
-local Inventory = AshraelPackage.VoidWalker.Inventory
+local Characters = AshraelPackage.VoidWalker.Managers.CharactersManager
+local Inventory = AshraelPackage.VoidWalker.Managers.InventoryManager
 
 -- `voidwalk` command handler
 function VoidWalker.HandleVoidwalkCommand(subCommand, option)

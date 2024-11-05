@@ -1,8 +1,48 @@
+--Register all relevant namespaces
 AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
-AshraelPackage.VoidWalker.Inventory = AshraelPackage.VoidWalker.Inventory or {}
-AshraelPackage.VoidWalker.Characters = AshraelPackage.VoidWalker.Characters or {}
-AshraelPackage.VoidWalker.Config = AshraelPackage.VoidWalker.Config or {}
-AshraelPackage.VoidWalker.Event = AshraelPackage.VoidWalker.Event or {}
+AshraelPackage.VoidWalker.Managers = AshraelPackage.VoidWalker.Managers or {}
+AshraelPackage.VoidWalker.Managers.InventoryManager = AshraelPackage.VoidWalker.Managers.InventoryManager or {}
+AshraelPackage.VoidWalker.Managers.CharactersManager = AshraelPackage.VoidWalker.Managers.CharactersManager or {}
+AshraelPackage.VoidWalker.Managers.ConfigManager = AshraelPackage.VoidWalker.Managers.ConfigManager or {}
+AshraelPackage.VoidWalker.Managers.EventManager = AshraelPackage.VoidWalker.Managers.EventManager or {}
+
+AshraelPackage.VoidWalker.DataAccessors = AshraelPackage.VoidWalker.DataAccessors or {}
+AshraelPackage.VoidWalker.DataAccessors.CharactersDA = AshraelPackage.VoidWalker.DataAccessors.CharactersDA or {}
+
+AshraelPackage.VoidWalker.Databases = AshraelPackage.VoidWalker.Databases or {}
+
+
+-- Create the VoidWalkerDB with characters and inventory tables
+AshraelPackage.VoidWalker.Databases.VoidWalkerDB = db:create("voidwalker", {
+    characters = {
+        name = "",  -- Unique identifier for each character
+        health = 0,
+        mana = 0,
+        movement = 0,
+        tnl = 0,
+        last_location = "",
+        is_registered = 0,  -- 1 for true, 0 for false
+        is_active = 0,      -- 1 for active, 0 for inactive
+        password = "",
+        _unique = { "name" }
+    },
+    inventory = {
+        character_name = "",  -- Foreign key linking item to character
+        item_id = 0,          -- Unique identifier for each item
+        name = "",            -- Item name
+        type = "",            -- Item type (e.g., weapon, container)
+        state = "",           -- Item state (e.g., open, closed)
+        container = "",       -- Container name if inside another item
+        _index = { "character_name", "item_id" }  -- Index for efficient lookups
+    }
+})
+
+-- Confirmation message for successful initialization
+if AshraelPackage.VoidWalker.Databases.VoidWalkerDB then
+    cecho("<green>VoidWalkerDB initialized successfully with characters and inventory tables.\n")
+else
+    cecho("<red>Error initializing VoidWalkerDB. Please check configuration.\n")
+end
 
 
 -- Display help for the voidwalk and voidgaze commands
