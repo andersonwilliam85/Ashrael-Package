@@ -13,6 +13,7 @@ The **Ashrael-Package** is a comprehensive suite of modules designed to enhance 
 ### 2. **VoidWalker**
    - **Voidwalking Between Characters:** Seamlessly switch between alts with immersive, void-themed messages.
    - **Character Status Tracking:** Automatically stores each character’s basic stats (health, mana, inventory) and last room visited.
+   - **Local Persistence:** Stores character data locally, including stats and inventory, for greater reliability across sessions.
    - **Voidgaze Command:** Provides an overview of all characters’ statuses, locations, and a unique void-themed message.
    - **Item Search Across Characters:** Quickly locate items across all character inventories.
    - **Consolidated Inventory View:** Summarizes items across all characters, displaying each character’s possession with immersive messaging.
@@ -54,8 +55,8 @@ The **Ashrael-Package** is a comprehensive suite of modules designed to enhance 
 ## Roadmap
 
 1. **VoidWalker Enhancements**:
-   - **Local Persistence**: Add local storage of character data, including stats and inventory, for enhanced reliability across sessions.
-   - **Advanced Character Management**: Simplify character registration and management for multi-character accounts.
+   - **Advanced Character Management**: Streamline character registration and provide in-depth management for multi-character accounts. Additional configuration options by character level are also planned.
+   - **Convergence**: A new feature that will enable automated gear swapping between alts, improving inventory management and preparation for voidwalking.
 
 2. **Adventure Mode Generalization**:
    - **Expanded Class Support**: Broaden support across additional classes, adapting spell-ups, healing, and recovery based on character class and alignment.
