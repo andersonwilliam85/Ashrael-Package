@@ -1,18 +1,15 @@
 -- Initialize AshraelPackage with AdventureMode and Spellup namespaces
-AshraelPackage = AshraelPackage or {}
-AshraelPackage.AdventureMode = AshraelPackage.AdventureMode or {}
+AshraelPackage.AdventureMode.Managers.SpellupManager = AshraelPackage.AdventureMode.Managers.SpellupManager or {}
 AshraelPackage.AdventureMode.Utils = AshraelPackage.AdventureMode.Utils or {}
-AshraelPackage.AdventureMode.Spellup = AshraelPackage.AdventureMode.Spellup or {}
 
-local AdventureMode = AshraelPackage.AdventureMode
-local Spellup = AdventureMode.Spellup
-local Utils = AdventureMode.Utils
+local SpellupManager = AshraelPackage.AdventureMode.Managers.SpellupManager
+local Utils = AshraelPackage.AdventureMode.Utils
 
 -- Define the threshold for requesting a full or split spell-up if not already set
-Spellup.SpellThreshold = Spellup.SpellThreshold or 5
+SpellupManager.SpellThreshold = SpellupManager.SpellThreshold or 5
 
 -- Define spell-up command preferences based on the player's class and bot class if not already set
-Spellup.ClassCommands = Spellup.ClassCommands or {
+SpellupManager.ClassCommands = SpellupManager.ClassCommands or {
     mage = { priest = "full", druid = "split", psionicist = "split" },
     warrior = { priest = "split", druid = "full", psionicist = "split" },
     cleric = { priest = "full", druid = "split", psionicist = "split" },
@@ -20,14 +17,14 @@ Spellup.ClassCommands = Spellup.ClassCommands or {
 }
 
 -- Define spells each class inherently cannot cast based on class limitations if not already set
-Spellup.ClassUnknownSpells = Spellup.ClassUnknownSpells or {
+SpellupManager.ClassUnknownSpells = SpellupManager.ClassUnknownSpells or {
     priest = { "Awen", "SteelSkeleton", "Barkskin" },
     druid = { "SteelSkeleton", "Aegis" },
     psionicist = { "Sanctuary", "Fortitude", "Invincibility", "Awen", "Barkskin", "Aegis" },
 }
 
 -- Define primary bots with their respective classes if not already set
-Spellup.PrimaryBots = Spellup.PrimaryBots or {
+SpellupManager.PrimaryBots = SpellupManager.PrimaryBots or {
     { name = "Logic", class = "priest" },
     { name = "Martyr", class = "priest" },
     { name = "FlutterFly", class = "druid" },
@@ -37,7 +34,7 @@ Spellup.PrimaryBots = Spellup.PrimaryBots or {
 }
 
 -- Define the full list of spells with additional properties if not already set
-Spellup.Spells = Spellup.Spells or {
+SpellupManager.Spells = SpellupManager.Spells or {
     sanc = { key = "Sanctuary", command = "sanc", selfCastOnly = false, classExclusions = {} },
     fort = { key = "Fortitude", command = "fort", selfCastOnly = false, classExclusions = {} },
     invinc = { key = "Invincibility", command = "invinc", selfCastOnly = false, classExclusions = {} },
@@ -108,7 +105,7 @@ local function IsClassExcluded(spell, playerClass)
 end
 
 -- Main function to handle the spell-up request
-function Spellup.RequestSpellup()
+function SpellupManager.RequestSpellup()
     AssignMissingSpellsToBots()
 
     coroutine.wrap(function()
