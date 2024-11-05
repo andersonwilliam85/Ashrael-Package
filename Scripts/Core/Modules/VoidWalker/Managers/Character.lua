@@ -1,16 +1,11 @@
--- Define namespaces for Voidwalker characters
-AshraelPackage = AshraelPackage or {}
-AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
-AshraelPackage.VoidWalker.Characters = AshraelPackage.VoidWalker.Characters or {}
-
--- Set up a local reference for easier use
 local Characters = AshraelPackage.VoidWalker.Characters
+local Inventory = AshraelPackage.VoidWalker.Inventory
 
--- Global storage for all character data in the Voidwalker system
 Characters.CharacterData = Characters.CharacterData or {}
 
--- Flag to track if a character switch is in progress
-Characters.IsSwitching = false
+-- Flags for managing the state of processes
+Characters.isSwitching = false
+Inventory.isUpdating = false
 Characters.SuppressTrigger = nil
 Characters.SuppressStopTrigger = nil
 
@@ -21,15 +16,14 @@ end
 
 -- Function to start suppressing output while voidwalking
 function Characters.StartSuppressingOutput()
-    deleteFull()  -- Clear the screen initially
+    deleteFull()
     Characters.SuppressTrigger = tempLineTrigger(1, 1000, function()
-        deleteLine()  -- Hide each incoming line
+        deleteLine()
     end)
     cecho("<cyan>The mists of the void conceal all...\n")
 
-    -- Set a trigger to detect the specific line that ends suppression
     Characters.SuppressStopTrigger = tempRegexTrigger("Last logged in from .+ on .+", function()
-        Characters.StopSuppressingOutput()  -- Stop suppression once the line is matched
+        Characters.StopSuppressingOutput()
     end)
 end
 
@@ -43,7 +37,7 @@ function Characters.StopSuppressingOutput()
         killTrigger(Characters.SuppressStopTrigger)
         Characters.SuppressStopTrigger = nil
     end
-    deleteFull()  -- Clear the screen once more to ensure a fresh view
+    deleteFull()
 end
 
 -- Ensure the current player is registered; if not, prompt for registration
@@ -70,12 +64,25 @@ function Characters.RegisterCharacter(name, password)
     name = properCase(name)
     Characters.CharacterData[name] = {
         Password = password,
-        Stats = {},
+        Stats = {
+            Health = gmcp.Char.Vitals and gmcp.Char.Vitals.hp or 0,
+            Health_Max = gmcp.Char.Vitals and gmcp.Char.Vitals.maxhp or 0,
+            Mana = gmcp.Char.Vitals and gmcp.Char.Vitals.mp or 0,
+            Mana_Max = gmcp.Char.Vitals and gmcp.Char.Vitals.maxmp or 0,
+            Movement = gmcp.Char.Vitals and gmcp.Char.Vitals.mv or 0,
+            Movement_Max = gmcp.Char.Vitals and gmcp.Char.Vitals.maxmv or 0,
+            TNL = gmcp.Char.Vitals and gmcp.Char.Vitals.tnl or 0,
+            MaxTNL = gmcp.Char.Vitals and gmcp.Char.Vitals.maxtnl or 0,
+        },
         ProperName = name,
         LastLocation = gmcp.Room.Info and gmcp.Room.Info.name or "Unknown",
-        Inventory = {},
-        IsRegistered = true
+        IsRegistered = true,
+        IsActive = true
     }
+
+    -- Initialize inventory for the character and perform an initial scan
+    Inventory.InitializeInventory(name)
+    Inventory.UpdateInventory(name, "inv")
 
     cecho(string.format("<cyan>Your essence, %s, is now etched into the void.\n", name))
 end
@@ -90,12 +97,25 @@ function Characters.AddCharacter(name, password)
     name = properCase(name)
     Characters.CharacterData[name] = {
         Password = password,
-        Stats = {},
+        Stats = {
+            Health = 0,
+            Health_Max = 0,
+            Mana = 0,
+            Mana_Max = 0,
+            Movement = 0,
+            Movement_Max = 0,
+            TNL = 0,
+            MaxTNL = 0,
+        },
         ProperName = name,
         LastLocation = "Unknown",
-        Inventory = {},
-        IsRegistered = true
+        IsRegistered = true,
+        IsActive = false
     }
+
+    -- Initialize inventory for the character and perform an initial scan
+    Inventory.InitializeInventory(name)
+    Inventory.UpdateInventory(name, "inv")
 
     cecho(string.format("<cyan>%s has been inscribed upon the void.\n", name))
 end
@@ -106,6 +126,7 @@ function Characters.RemoveCharacter(name)
 
     if Characters.CharacterData[name] then
         Characters.CharacterData[name] = nil
+        Inventory.ClearInventory(name)
         cecho(string.format("<red>%s has been erased from the void.\n", name))
     else
         cecho(string.format("<yellow>No trace of %s exists within the void.\n", name))
@@ -122,12 +143,15 @@ function Characters.UpdateActiveStatus(currentName)
     cecho(string.format("<cyan>Your presence as %s resonates within the void.\n", currentName))
 end
 
--- Function to be called after successful login
+-- Function to be called after successful login, updating inventory and stats
 function Characters.HandleLogin(name)
     name = properCase(name)
     Characters.UpdateActiveStatus(name)
-    Characters.IsSwitching = false
-    Characters.DisplayVoidwalkingMessage()  -- Show immersive message upon login
+    Characters.isSwitching = false
+    Characters.DisplayVoidwalkingMessage()
+
+    -- Update character stats and inventory immediately upon login
+    Characters.UpdateCharacterData(name)
 end
 
 -- Display immersive voidwalking message with expanded format
@@ -144,11 +168,29 @@ function Characters.DisplayVoidwalkingMessage()
     cecho("<magenta>=====================================================================================\n\n")
 end
 
--- Switch to a specified character by name
+-- Safe function to switch characters with a check for inventory updates
+function Characters.SafeSwitchCharacter(name)
+    if Inventory.isUpdating then
+        tempTimer(0.5, function() Characters.SafeSwitchCharacter(name) end)
+    else
+        Characters.SwitchCharacter(name)
+    end
+end
+
+-- Switch to a specified character by name, ensuring inventory updates are complete
 function Characters.SwitchCharacter(name)
+    -- Delay switch if inventory update is ongoing
+    if Inventory.isUpdating then
+        Characters.SafeSwitchCharacter(name)
+        return
+    end
+
+    Characters.isSwitching = true
+
     local currentName = gmcp.Char.Status and gmcp.Char.Status.character_name
     if not currentName then
         cecho("<red>Your essence cannot be discerned. The void denies access.\n")
+        Characters.isSwitching = false
         return
     end
 
@@ -157,6 +199,7 @@ function Characters.SwitchCharacter(name)
 
     if currentName == name then
         cecho("<magenta>The void shudders. You cannot voidwalk into your own reflection.\n")
+        Characters.isSwitching = false
         return
     end
 
@@ -164,43 +207,39 @@ function Characters.SwitchCharacter(name)
         Characters.UpdateCharacterData(currentName)
     else
         cecho(string.format("<yellow>No trace of %s exists within the void.\n", currentName))
+        Characters.isSwitching = false
         return
     end
 
     local char = Characters.CharacterData[name]
     if char and char.IsRegistered then
-        if not Characters.IsSwitching then
-            Characters.IsSwitching = true
-            cecho(string.format("<magenta>Reaching across the void to manifest as %s...\n", name))
-            
-            Characters.StartSuppressingOutput()  -- Start suppressing output
-            send("quit")
-            local nameTrigger, passwordTrigger
+        cecho(string.format("<magenta>Reaching across the void to manifest as %s...\n", name))
+        Characters.StartSuppressingOutput()
+        send("quit")
+        local nameTrigger, passwordTrigger
 
-            tempTimer(2, function()
-                connectToServer("avatar.outland.org", 3000)
+        tempTimer(2, function()
+            connectToServer("avatar.outland.org", 3000)
 
-                nameTrigger = tempTrigger("What name shall you be known by, adventurer?", function()
-                    send(name)
+            nameTrigger = tempTrigger("What name shall you be known by, adventurer?", function()
+                send(name)
 
-                    passwordTrigger = tempTrigger("Your Password:", function()
-                        send(char.Password)
-                        Characters.HandleLogin(name)
+                passwordTrigger = tempTrigger("Your Password:", function()
+                    send(char.Password)
+                    Characters.HandleLogin(name)
 
-                        if nameTrigger then killTrigger(nameTrigger) end
-                        if passwordTrigger then killTrigger(passwordTrigger) end
-                    end)
+                    if nameTrigger then killTrigger(nameTrigger) end
+                    if passwordTrigger then killTrigger(passwordTrigger) end
                 end)
             end)
-        else
-            cecho("<yellow>The void is already in motion. Please wait.\n")
-        end
+        end)
     else
         cecho(string.format("<yellow>The void does not recognize %s.\n", name))
+        Characters.isSwitching = false
     end
 end
 
--- Utility to update character data from GMCP
+-- Utility to update character data from GMCP and refresh inventory
 function Characters.UpdateCharacterData(name)
     local charName = properCase(name)
     local char = Characters.CharacterData[charName]
@@ -226,19 +265,11 @@ function Characters.UpdateCharacterData(name)
         char.LastLocation = gmcp.Room.Info.name or char.LastLocation
     end
 
-    if gmcp.Char.Items.List and gmcp.Char.Items.List.items then
-        char.Inventory = {}
-        for _, item in ipairs(gmcp.Char.Items.List.items) do
-            table.insert(char.Inventory, item.name)
-        end
-    end
-
-    if gmcp.Char.Status then
-        char.ProperName = gmcp.Char.Status.character_name or char.ProperName
-    end
+    -- Update inventory using the Inventory API for the specific character
+    Inventory.UpdateInventory(charName, "inv")
 end
 
--- List all characters in the system (VoidGaze function)
+-- List all characters in the system
 function Characters.ListCharacters()
     cecho("<magenta>===== VOIDWALKER GAZE =====\n")
     if next(Characters.CharacterData) == nil then
@@ -253,7 +284,7 @@ function Characters.ListCharacters()
     cecho("<magenta>===========================\n")
 end
 
--- Get detailed character information
+-- Get detailed character information including inventory
 function Characters.GetCharacterDetails(name)
     name = properCase(name)
     local char = Characters.CharacterData[name]
@@ -267,12 +298,8 @@ function Characters.GetCharacterDetails(name)
     cecho(string.format("  Health: %s/%s, Mana: %s/%s\n", char.Stats.Health or "N/A", char.Stats.Health_Max or "N/A",
                          char.Stats.Mana or "N/A", char.Stats.Mana_Max or "N/A"))
     cecho(string.format("  Last Location: %s\n", char.LastLocation or "Unknown"))
+    
+    -- Display inventory using Inventory API
     cecho("  Inventory:\n")
-    if char.Inventory and #char.Inventory > 0 then
-        for _, item in ipairs(char.Inventory) do
-            cecho(string.format("    - %s\n", item))
-        end
-    else
-        cecho("    None\n")
-    end
+    Inventory.ShowCharacterInventory(name)
 end

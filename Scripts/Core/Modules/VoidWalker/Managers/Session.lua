@@ -1,7 +1,3 @@
--- AshraelPackage.VoidWalker.Sessions (Placeholder for session management)
-AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
-AshraelPackage.VoidWalker.Sessions = AshraelPackage.VoidWalker.Sessions or {}
-
 local Sessions = AshraelPackage.VoidWalker.Sessions
 
 -- Placeholder function to start a session
