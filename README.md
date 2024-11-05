@@ -8,14 +8,16 @@ The **Ashrael-Package** is a comprehensive suite of modules designed to enhance 
    - Toggle between **solo** and **group** play modes to adjust engagement levels based on your play style.
    - Manages recovery for health and mana, with built-in spell-ups and healing requests as needed.
    - **Status Checks:** Quickly view the current adventure mode status, recovery mode, and configuration.
+   - **Note:** Adventure Mode currently has limited flexibility, supporting only a single-character configuration. Significant enhancements are planned to generalize functionality for a wider range of characters.
 
-### 2. **VoidWalker** (Beta)
-   - **Voidwalking Between Characters:** Allows seamless switching between alts with thematic, immersive messages.
+### 2. **VoidWalker**
+   - **Voidwalking Between Characters:** Seamlessly switch between alts with immersive, void-themed messages.
    - **Character Status Tracking:** Automatically stores each character’s basic stats (health, mana, inventory) and last room visited.
    - **Voidgaze Command:** Provides an overview of all characters’ statuses, locations, and a unique void-themed message.
-   - **Item Search Across Characters:** Quickly locate items in the inventories of all your characters.
-   - **Autologin Animation:** An immersive “slipping through the void” animation hides login screens.
-   - **Custom Login/Logout Messaging:** Transition messages add depth with phrases like “You slip into the void…”
+   - **Item Search Across Characters:** Quickly locate items across all character inventories.
+   - **Consolidated Inventory View:** Summarizes items across all characters, displaying each character’s possession with immersive messaging.
+   - **Autologin Animation:** A “slipping through the void” animation hides login screens, adding to the experience.
+   - **Custom Login/Logout Messaging:** Thematic transition messages add immersion, e.g., “You slip into the void…”
 
 ### 3. **PackageManager**
    - **Automated Update Check:** Easily check for available updates to keep your package up-to-date with the latest features and fixes.
@@ -52,22 +54,19 @@ The **Ashrael-Package** is a comprehensive suite of modules designed to enhance 
 ## Roadmap
 
 1. **VoidWalker Enhancements**:
-   - **Suppressing Login Screens**: Further refine VoidWalker’s ability to hide login screens, maintaining immersion with its “voidwalking” theme.
-   - **Improved Character Management**: Streamline the management of multiple characters, including more intuitive adding, removing, and switching functionality.
-   - **Local Persistence**: Implement local data storage to retain character stats, inventory, and status across sessions, enhancing efficiency and consistency without needing external files.
+   - **Local Persistence**: Add local storage of character data, including stats and inventory, for enhanced reliability across sessions.
+   - **Advanced Character Management**: Simplify character registration and management for multi-character accounts.
 
 2. **Adventure Mode Generalization**:
-   - **Expanded Class Support**: Broaden support across additional classes, allowing Adventure Mode to dynamically adapt spell-ups, healing, and recovery processes based on the character’s class and alignment.
-   - **Generic Play Modes**: Refine solo and group play mode behaviors for more flexibility and situational adjustments, with customized options for different class needs and play styles.
-   - **Enhanced Automation**: Build out the automation layer to better manage buffing, recovery, and engagement for both solo and group modes.
+   - **Expanded Class Support**: Broaden support across additional classes, adapting spell-ups, healing, and recovery based on character class and alignment.
+   - **Generic Play Modes**: Generalize solo and group modes to accommodate diverse class and playstyle needs.
+   - **Enhanced Automation**: Refine automation to manage buffs, recovery, and engagement efficiently for both solo and group play.
 
-3. **PackageManager Maintenance**:
-   - Continue refining version control and compatibility checks to ensure a stable experience across Mudlet updates, with a focus on seamless PackageManager functionality.
+3. **PackageManager Refinements**:
+   - Ensure seamless compatibility and stability with Mudlet updates, focusing on package update checks and version management.
 
 ## Contributing
 
 Contributions are welcome. For feature requests or bug reports, please submit an issue on the repository, or reach out to the project maintainer directly.
 
 ---
-
-This package simplifies multi-character management, automated updates, and adventure mode controls, all while creating an immersive, customizable experience on Avatar MUD.
