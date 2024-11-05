@@ -53,6 +53,21 @@ function CharactersDA.GetAllCharacters()
     return characters
 end
 
+-- **Retrieve the Currently Active Character**
+function CharactersDA.GetActiveCharacter()
+    -- Fetch the character with 'is_active' set to 1
+    local activeCharacter = db:fetch(VoidWalkerDB.characters, db:eq(VoidWalkerDB.characters.is_active, 1))
+    
+    if #activeCharacter > 0 then
+        -- Assuming only one active character, return the first result
+        return activeCharacter[1]
+    else
+        cecho("<yellow>DEBUG: No active character found in the database.\n")
+        return nil
+    end
+end
+
+
 -- **Update Character**
 function CharactersDA.UpdateCharacter(character)
     local data = db:fetch(VoidWalkerDB.characters, db:eq(VoidWalkerDB.characters.name, character.name))
