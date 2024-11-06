@@ -1,15 +1,16 @@
 -- Initialize AshraelPackage with AdventureMode and Healing namespaces
 AshraelPackage = AshraelPackage or {}
 AshraelPackage.AdventureMode = AshraelPackage.AdventureMode or {}
-AshraelPackage.AdventureMode.Healing = AshraelPackage.AdventureMode.Healing or {}
+AshraelPackage.AdventureMode.Managers = AshraelPackage.AdventureMode.Managers or {}
+AshraelPackage.AdventureMode.Managers.HealingManager = AshraelPackage.AdventureMode.Managers.HealingManager or {}
 AshraelPackage.AdventureMode.Utils = AshraelPackage.AdventureMode.Utils or {}
 
 local AdventureMode = AshraelPackage.AdventureMode
 local Utils = AshraelPackage.AdventureMode.Utils
-local Healing = AdventureMode.Healing
+local HealingManager = AshraelPackage.AdventureMode.Managers.HealingManager
 
 -- Define each bot with their name and healing command if not already set
-Healing.Bots = Healing.Bots or {
+HealingManager.Bots = HealingManager.Bots or {
     { name = "Logic", healCommand = "div" },
     { name = "Martyr", healCommand = "div" },
     { name = "FlutterFly", healCommand = "div" },
@@ -18,20 +19,20 @@ Healing.Bots = Healing.Bots or {
 }
 
 -- Constant defining HP gained per div spell if not already set
-Healing.DivHealAmount = Healing.DivHealAmount or 250
+HealingManager.DivHealAmount = HealingManager.DivHealAmount or 250
 
 -- Function to handle healing requests
-function Healing.RequestHealing()
+function HealingManager.RequestHealing()
     coroutine.wrap(function()
         if StatTable.current_health and StatTable.max_health then
             local missingHealth = StatTable.max_health - StatTable.current_health
-            local totalDivsNeeded = math.ceil(missingHealth / Healing.DivHealAmount)
+            local totalDivsNeeded = math.ceil(missingHealth / HealingManager.DivHealAmount)
             Utils.DebugPrint("Missing health = %d, Total divs needed = %d", missingHealth, totalDivsNeeded)
 
             -- Filter available bots in priority order
             local availableBots = {}
-            for _, bot in ipairs(Healing.Bots) do
-                if AdventureMode.Utils.CheckBotPresence(bot.name) then
+            for _, bot in ipairs(HealingManager.Bots) do
+                if Utils.CheckBotPresence(bot.name) then
                     table.insert(availableBots, bot)
                     Utils.DebugPrint("Bot available for healing: %s", bot.name)
                 else

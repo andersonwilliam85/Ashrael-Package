@@ -1,8 +1,7 @@
 -- Initialize AshraelPackage with AdventureMode and Utils namespaces
 AshraelPackage = AshraelPackage or {}
 AshraelPackage.AdventureMode.Utils = AshraelPackage.AdventureMode.Utils or {}
-
-local Utils = AshraelPackage.AdventureMode.Utils
+Utils = AshraelPackage.AdventureMode.Utils
 
 Utils.IsInSanctum = Utils.IsInSanctum or false
 Utils.IsInSanctumInfirmary = Utils.IsInSanctumInfirmary or false
@@ -43,6 +42,15 @@ function Utils.ResumeCallback(callback)
         Utils.DebugPrint("No callback provided.", true)  -- Updated debug print
     end
 end
+
+-- Debug print function using Ashrael_Package.AdventureMode.State for debug mode
+function Utils.DebugPrint(message, ...)
+    if AshraelPackage.AdventureMode.State.DebugMode then
+        local formattedMessage = string.format(message, ...)
+        cecho("<cyan>[DEBUG] " .. formattedMessage .. "<reset>\n")
+    end
+end
+
 
 -- Register event handler for updating Sanctum status
 registerAnonymousEventHandler("gmcp.Room.Info", "AshraelPackage.AdventureMode.Utils.UpdateSanctumStatus")

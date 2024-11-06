@@ -1,9 +1,8 @@
-AshraelPackage.AdventureMode.Gear = AshraelPackage.AdventureMode.Gear or {}
+AshraelPackage.AdventureMode.EquipmentManager = AshraelPackage.AdventureMode.EquipmentManager or {}
 
-local AdventureMode = AshraelPackage.AdventureMode
-local Gear = AdventureMode.Gear
+local EquipmentManager = AshraelPackage.AdventureMode.Managers.EquipmentManager
 
-function Gear.Equip(gearType)
+function EquipmentManager.Equip(gearType)
   if gearType == "mana" then
       -- Equip mana items
       send("put all misc")
@@ -30,3 +29,7 @@ function Gear.Equip(gearType)
       cecho("\n<red>Invalid gear type. Use either 'mana' or 'tank'.<reset>")
   end
 end
+
+
+AshraelPackage.AdventureMode.EquipmentManager = EquipmentManager
+return AshraelPackage.AdventureMode.EquipmentManager

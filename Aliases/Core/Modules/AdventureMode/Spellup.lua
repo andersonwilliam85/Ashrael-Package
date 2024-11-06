@@ -5,4 +5,4 @@
 AshraelPackage.AdventureMode.State.DebugMode = matches[2] ~= nil
 
 -- Call RequestSpellup without passing debugEnabled
-AshraelPackage.AdventureMode.Spellup.RequestSpellup()
+AshraelPackage.AdventureMode.Managers.SpellupManager.RequestSpellup()

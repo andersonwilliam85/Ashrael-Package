@@ -1,4 +1,4 @@
 -- Regex Triggers:
 -- ^tryrecall$
 
-AshraelPackage.AdventureMode.Utility.TryRecall()
+AshraelPackage.AdventureMode.Utils.TryRecall()

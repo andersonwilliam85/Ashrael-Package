@@ -1,4 +1,7 @@
 -- Initialize AshraelPackage with AdventureMode and Spellup namespaces
+AshraelPackage = AshraelPackage or {}
+AshraelPackage.AdventureMode = AshraelPackage.AdventureMode or {}
+AshraelPackage.AdventureMode.Managers = AshraelPackage.AdventureMode.Managers or {}
 AshraelPackage.AdventureMode.Managers.SpellupManager = AshraelPackage.AdventureMode.Managers.SpellupManager or {}
 AshraelPackage.AdventureMode.Utils = AshraelPackage.AdventureMode.Utils or {}
 
@@ -67,10 +70,10 @@ end
 
 -- Function to assign missing spells to each bot based on ClassUnknownSpells
 local function AssignMissingSpellsToBots()
-    for _, bot in ipairs(Spellup.PrimaryBots) do
+    for _, bot in ipairs(SpellupManager.PrimaryBots) do
         bot.missingSpells = {}
-        for _, spell in pairs(Spellup.Spells) do
-            if Spellup.ClassUnknownSpells[bot.class] and table.contains(Spellup.ClassUnknownSpells[bot.class], spell.key) then
+        for _, spell in pairs(SpellupManager.Spells) do
+            if SpellupManager.ClassUnknownSpells[bot.class] and table.contains(SpellupManager.ClassUnknownSpells[bot.class], spell.key) then
                 table.insert(bot.missingSpells, spell)
                 Utils.DebugPrint("Adding spell %s to missing list for bot %s", spell.key, bot.name)
             end
@@ -83,7 +86,7 @@ local function GetPreferredPrimaryBot(bots, playerClass)
     local fallbackBot = nil
     for _, bot in ipairs(bots) do
         if Utils.CheckBotPresence(bot.name) then
-            local command = AshraelPackage.AdventureMode.Spellup.ClassCommands[playerClass] and AshraelPackage.AdventureMode.Spellup.ClassCommands[playerClass][bot.class]
+            local command = SpellupManager.ClassCommands[playerClass] and SpellupManager.ClassCommands[playerClass][bot.class]
             Utils.DebugPrint("Evaluating bot %s with class %s for player class %s", bot.name, bot.class, playerClass)
             if command == "full" then
                 return bot, command
@@ -113,7 +116,7 @@ function SpellupManager.RequestSpellup()
         local playerAlignment = GetPlayerAlignment()
         local missingPrimary, missingSelf, totalMissing = {}, {}, 0
 
-        for _, spell in pairs(Spellup.Spells) do
+        for _, spell in pairs(SpellupManager.Spells) do
             if not StatTable[spell.key] then
                 if spell.selfCastOnly then
                     if (playerAlignment == "good" and spell.key == "ProtectionEvil") or
@@ -134,10 +137,10 @@ function SpellupManager.RequestSpellup()
             end
         end
 
-        if totalMissing < Spellup.SpellThreshold then
+        if totalMissing < SpellupManager.SpellThreshold then
             for _, spellCommand in ipairs(missingPrimary) do
-                for _, bot in ipairs(AdventureMode.Spellup.PrimaryBots) do
-                    if Utils.CheckBotPresence(bot.name) and not table.contains(bot.missingSpells, AshraelPackage.AdventureMode.Spellup.Spells[spellCommand]) then
+                for _, bot in ipairs(SpellupManager.PrimaryBots) do
+                    if Utils.CheckBotPresence(bot.name) and not table.contains(bot.missingSpells, SpellupManager.Spells[spellCommand]) then
                         send("tell " .. bot.name:lower() .. " " .. spellCommand)
                         Utils.DebugPrint("Sent spell command %s to bot %s", spellCommand, bot.name)
                         break
@@ -145,12 +148,12 @@ function SpellupManager.RequestSpellup()
                 end
             end
         else
-            local primaryBot, command = GetPreferredPrimaryBot(Spellup.PrimaryBots, playerClass)
+            local primaryBot, command = GetPreferredPrimaryBot(SpellupManager.PrimaryBots, playerClass)
             if primaryBot and command then
                 send("tell " .. primaryBot.name:lower() .. " " .. command)
                 Utils.DebugPrint("Issued %s spell-up command to %s", command, primaryBot.name)
                 if command == "split" then
-                    table.insert(missingSelf, playerAlignment == "good" and Spellup.Spells.protectionEvil.command or AshraelPackage.AdventureMode.Spellup.Spells.protectionGood.command)
+                    table.insert(missingSelf, playerAlignment == "good" and SpellupManager.Spells.protectionEvil.command or SpellupManager.Spells.protectionGood.command)
                 end
 
                 -- Check if other bots can assist with primary bot's missing spells
@@ -158,7 +161,7 @@ function SpellupManager.RequestSpellup()
                 for _, missingSpell in ipairs(primaryBot.missingSpells) do
                     if not IsClassExcluded(missingSpell, playerClass) and not StatTable[missingSpell.key] then
                         local spellFound = false
-                        for _, bot in ipairs(Spellup.PrimaryBots) do
+                        for _, bot in ipairs(SpellupManager.PrimaryBots) do
                             if bot ~= primaryBot and Utils.CheckBotPresence(bot.name) then
                                 if not table.contains(bot.missingSpells, missingSpell) then
                                     send("tell " .. bot.name:lower() .. " " .. missingSpell.command)

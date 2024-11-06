@@ -5,4 +5,4 @@
 local equipType = matches[2]  -- matches[2] will be "mana" or "tank"
 
 -- Call the Equip function with the specified gear type
-AshraelPackage.AdventureMode.Gear.Equip(equipType)
+AshraelPackage.AdventureMode.Managers.EquipmentManager.Equip(equipType)

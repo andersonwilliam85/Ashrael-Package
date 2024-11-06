@@ -5,4 +5,4 @@
 AshraelPackage.AdventureMode.State.DebugMode = matches[2] ~= nil
 
 -- Call RequestHealing without passing debugEnabled
-AshraelPackage.AdventureMode.Healing.RequestHealing()
+AshraelPackage.AdventureMode.Managers.HealingManager.RequestHealing()

@@ -13,25 +13,26 @@ AdventureMode.State = AdventureMode.State or {
 -- Full namespace qualification for managers
 AshraelPackage.AdventureMode.Managers = AshraelPackage.AdventureMode.Managers or {}
 AshraelPackage.AdventureMode.Managers.RecallManager = AshraelPackage.AdventureMode.Managers.RecallManager or {}
-AshraelPackage.AdventureMode.Managers.UtilsManager = AshraelPackage.AdventureMode.Managers.UtilsManager or {}
-AshraelPackage.AdventureMode.Managers.GearManager = AshraelPackage.AdventureMode.Managers.GearManager or {}
+AshraelPackage.AdventureMode.Managers.EquipmentManager = AshraelPackage.AdventureMode.Managers.EquipmentManager or {}
 AshraelPackage.AdventureMode.Managers.SpellupManager = AshraelPackage.AdventureMode.Managers.SpellupManager or {}
 AshraelPackage.AdventureMode.Managers.HealingManager = AshraelPackage.AdventureMode.Managers.HealingManager or {}
+AshraelPackage.AdventureMode.Utils = AshraelPackage.AdventureMode.Utils or {}
 
 -- Local references to AdventureMode managers
-local Recall = AshraelPackage.AdventureMode.Managers.RecallManager
-local Utils = AshraelPackage.AdventureMode.Managers.UtilsManager
-local Gear = AshraelPackage.AdventureMode.Managers.GearManager
-local Spellup = AshraelPackage.AdventureMode.Managers.SpellupManager
-local Healing = AshraelPackage.AdventureMode.Managers.HealingManager
+local RecallManager = AshraelPackage.AdventureMode.Managers.RecallManager
+local EquipmentManager = AshraelPackage.AdventureMode.Managers.EquipmentManager
+local SpellupManager = AshraelPackage.AdventureMode.Managers.SpellupManager
+local HealingManager = AshraelPackage.AdventureMode.Managers.HealingManager
 local State = AdventureMode.State
+
+local Utils = AshraelPackage.AdventureMode.Utils
 
 -- Function to initiate recall and recovery process
 function AdventureMode.InitiateRecallAndRecovery()
     Utils.DebugPrint("Initiating recall and recovery process.")
 
     local recoveryCoroutine = coroutine.create(function()
-        while not Recall.TryRecallComplete do
+        while not RecallManager.TryRecallComplete do
             Utils.DebugPrint("Waiting for TryRecall to complete.")
             coroutine.yield() -- Yield until TryRecall completes
         end
@@ -42,9 +43,9 @@ function AdventureMode.InitiateRecallAndRecovery()
 
         tempTimer(5, function()
             Utils.DebugPrint("Equipping mana gear, initiating healing, and preparing spells.")
-            Gear.Equip("mana")
-            Spellup.RequestSpellup()
-            Healing.RequestHealing()
+            EquipmentManager.Equip("mana")
+            SpellupManager.RequestSpellup()
+            HealingManager.RequestHealing()
 
             if StatTable.Position and StatTable.Position:lower() ~= "sleep" then
                 Utils.DebugPrint("Entering sleep mode to complete recovery.")
@@ -57,13 +58,13 @@ function AdventureMode.InitiateRecallAndRecovery()
         end)
     end)
 
-    Recall.TryRecallComplete = false
-    Recall.TryRecallCoroutine = coroutine.create(function()
+    RecallManager.TryRecallComplete = false
+    RecallManager.TryRecallCoroutine = coroutine.create(function()
         Utils.DebugPrint("Starting TryRecall coroutine.")
-        Recall.TryRecall(recoveryCoroutine)
+        RecallManager.TryRecall(recoveryCoroutine)
     end)
 
-    local status, err = coroutine.resume(Recall.TryRecallCoroutine)
+    local status, err = coroutine.resume(RecallManager.TryRecallCoroutine)
     if not status then
         Utils.DebugPrint("Failed to start TryRecall coroutine: " .. tostring(err), true)
     else
@@ -83,7 +84,7 @@ function AdventureMode.ToggleAdventure(mode)
             send("wake")
         end
         Utils.DebugPrint("Equipping tank gear and surveying surroundings.")
-        Gear.Equip("tank")
+        EquipmentManager.Equip("tank")
         send("look")
     else
         Utils.DebugPrint("Adventure mode OFF.")
@@ -132,7 +133,7 @@ function AdventureMode.ResumeAdventure()
         if StatTable.Position and StatTable.Position:lower() == "sleep" then
             send("wake")
         end
-        Gear.Equip("tank")
+        EquipmentManager.Equip("tank")
         send("recall")
         send("look")
         Utils.DebugPrint("Solo Adventure mode resumed successfully.")
