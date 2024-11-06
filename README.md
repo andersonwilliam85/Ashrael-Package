@@ -4,13 +4,7 @@ The **Ashrael-Package** is a comprehensive suite of modules designed to enhance 
 
 ## Features
 
-### 1. **Adventure Mode**
-   - Toggle between **solo** and **group** play modes to adjust engagement levels based on your play style.
-   - Manages recovery for health and mana, with built-in spell-ups and healing requests as needed.
-   - **Status Checks:** Quickly view the current adventure mode status, recovery mode, and configuration.
-   - **Note:** Adventure Mode currently has limited flexibility, supporting only a single-character configuration. Significant enhancements are planned to generalize functionality for a wider range of characters.
-
-### 2. **VoidWalker**
+### 1. **VoidWalker**
    - **Voidwalking Between Characters:** Seamlessly switch between alts with immersive, void-themed messages.
    - **Character Status Tracking:** Automatically stores each character’s basic stats (health, mana, inventory) and last room visited.
    - **Local Persistence:** Stores character data locally, including stats and inventory, for greater reliability across sessions.
@@ -19,6 +13,12 @@ The **Ashrael-Package** is a comprehensive suite of modules designed to enhance 
    - **Consolidated Inventory View:** Summarizes items across all characters, displaying each character’s possession with immersive messaging.
    - **Autologin Animation:** A “slipping through the void” animation hides login screens, adding to the experience.
    - **Custom Login/Logout Messaging:** Thematic transition messages add immersion, e.g., “You slip into the void…”
+
+### 2. **Adventure Mode**
+   - Toggle between **solo** and **group** play modes to adjust engagement levels based on your play style.
+   - Manages recovery for health and mana, with built-in spell-ups and healing requests as needed.
+   - **Status Checks:** Quickly view the current adventure mode status, recovery mode, and configuration.
+   - **Note:** Adventure Mode currently has limited flexibility, supporting only a single-character configuration. Significant enhancements are planned to generalize functionality for a wider range of characters.
 
 ### 3. **PackageManager**
    - **Automated Update Check:** Easily check for available updates to keep your package up-to-date with the latest features and fixes.
