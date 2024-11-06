@@ -10,7 +10,7 @@ local RecallManager = AshraelPackage.AdventureMode.Managers.RecallManager
 local Utils = AshraelPackage.AdventureMode.Utils
 
 if line:find("This ground is cursed, you cannot seek Sanctum!") then
-    Recall.RecallStatus = "cursed"
+    RecallManager.RecallStatus = "cursed"
     Utils.DebugPrint("Trigger detected curse. Resuming TryRecallCoroutine.")  -- Replaced with DebugPrint
     coroutine.resume(RecallManager.TryRecallCoroutine)
 elseif line:find("No way!  You are still fighting!") then
