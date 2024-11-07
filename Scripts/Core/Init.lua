@@ -312,34 +312,67 @@ end
 function AshraelPackage.CheckAndUpdateToLatestVersion()
     local path = AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "versions.lua"
     local availableVersions
-    local status, err = pcall(function() availableVersions = dofile(path) end)
+
+    -- Attempt to load available versions
+    local status, err = pcall(function() 
+        availableVersions = dofile(path) 
+    end)
 
     if not status then
+        cecho("<red>Error loading versions from " .. path .. ": " .. tostring(err) .. "<reset>\n")
         return
     end
 
+    -- Ensure there are available versions loaded
+    if not availableVersions or #availableVersions == 0 then
+        cecho("<red>No available versions found in " .. path .. "<reset>\n")
+        return
+    end
+
+    -- Get the latest version from the list
     local latestVersion = availableVersions[#availableVersions]
+    cecho("Latest version available: " .. latestVersion .. "\n")
+
+    -- Compare the latest version with the current version
     if latestVersion ~= AshraelPackage.Version then
+        cecho("Updating to version: " .. latestVersion .. "\n")
         AshraelPackage.UpdateToVersion(latestVersion)
+    else
+        cecho("<green>You are already on the latest version: " .. AshraelPackage.Version .. "<reset>\n")
     end
 end
 
 -- Switch to a specific version
 function AshraelPackage.SwitchToVersion(version)
+    cecho("Switching to version...\n")
     local path = AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "versions.lua"
+
+    -- Check if the file exists before attempting to load it
+    if not io.open(path, "r") then
+        cecho("<red>Unable to find versions.lua at " .. path .. "<reset>\n")
+        return
+    end
+
     local availableVersions
-    local status, err = pcall(function() availableVersions = dofile(path) end)
+    local status, err = pcall(function() 
+        availableVersions = dofile(path) 
+    end)
 
     if not status then
+        cecho("<red>Error loading versions: " .. tostring(err) .. "<reset>\n")
         return
     end
 
     if version < AshraelPackage.GetGlobalSetting(packageName, "minimum_supported_version") then
+        cecho("<red>Version " .. version .. " is below the minimum supported version.<reset>\n")
         return
     end
 
     if not table.contains(availableVersions, version) then
+        cecho("Switching to version " .. version .. "\n")
         AshraelPackage.UpdateToVersion(version)
+    else
+        cecho("Version " .. version .. " is already installed.\n")
     end
 end
 
@@ -429,13 +462,13 @@ function AshraelPackage.DisplayHelp()
 
     cecho("\nEnjoy using Ashrael Package to simplify your MUD experience!<reset>\n")
 end
-
+  
 -- Set up aliases for package commands
 if not AshraelPackage.AliasCreated then
+    tempAlias("^ashpkg$", [[AshraelPackage.DisplayHelp()]])  -- Updated to trigger help on blank command
     tempAlias("^ashpkg update$", [[AshraelPackage.CheckAndUpdateToLatestVersion()]])
     tempAlias("^ashpkg versions$", [[AshraelPackage.DownloadAndListVersions()]])
     tempAlias("^ashpkg switch (.+)$", [[AshraelPackage.SwitchToVersion(matches[2])]])
-    tempAlias("^ashpkg$", [[AshraelPackage.DisplayHelp()]])  -- Updated to trigger help on blank command
     AshraelPackage.AliasCreated = true
 end
 
