@@ -24,23 +24,69 @@ CharactersManager.periodicUpdateTimer = nil
 -- Periodic update function for active character stats and inventory
 local function PeriodicUpdateActiveCharacter()
     local activeCharacter = CharactersDA.GetActiveCharacter()
+    local currentCharacterName = properCase(gmcp.Char.Status.character_name or "")
 
-    if activeCharacter and not CharactersManager.isSwitching then
-        CharactersManager.isUpdating = true
+    -- Check if the current character is registered
+    if currentCharacterName ~= "" then
+        local currentCharacter = CharactersDA.GetCharacter(currentCharacterName)
 
-        if gmcp.Char.Vitals then
-            activeCharacter.health = gmcp.Char.Vitals.hp
-            activeCharacter.mana = gmcp.Char.Vitals.mp
-            activeCharacter.movement = gmcp.Char.Vitals.mv
-            activeCharacter.tnl = gmcp.Char.Vitals.tnl
-            activeCharacter.last_location = gmcp.Room.Info and gmcp.Room.Info.name or activeCharacter.last_location
-            CharactersDA.UpdateCharacter(activeCharacter)
+        if not currentCharacter then
+            -- If the character is not registered, show a thematic message
+            cecho("<cyan>The void stirs with whispers: \"Who is this unknown soul, wandering the realms?\"\n")
+            cecho("<yellow>Please register " .. currentCharacterName .. " before stepping into the void.\n")
+            return  -- Exit the function, as there's no active character to update
         end
 
-        InventoryDA.UpdateInventoryFromGMCP(activeCharacter.name, "inv")
-        CharactersManager.isUpdating = false
+        -- If there's an active character and we're not switching, update stats
+        if activeCharacter and not CharactersManager.isSwitching then
+            CharactersManager.isUpdating = true
+
+            -- Update active character's stats
+            if gmcp.Char.Vitals then
+                activeCharacter.health = gmcp.Char.Vitals.hp
+                activeCharacter.mana = gmcp.Char.Vitals.mp
+                activeCharacter.movement = gmcp.Char.Vitals.mv
+                activeCharacter.tnl = gmcp.Char.Vitals.tnl
+                activeCharacter.last_location = gmcp.Room.Info and gmcp.Room.Info.name or activeCharacter.last_location
+                CharactersDA.UpdateCharacter(activeCharacter)
+            end
+
+            InventoryDA.UpdateInventoryFromGMCP(activeCharacter.name, "inv")
+            CharactersManager.isUpdating = false
+        else
+            -- If there's no active character set it as active
+            if not activeCharacter then
+                cecho("<cyan>The void whispers, \"Recognizing you, " .. currentCharacterName .. ", and setting you as active.\"\n")
+                CharactersDA.SetActiveCharacter(currentCharacterName)  -- Set the current character as active
+                activeCharacter = CharactersDA.GetActiveCharacter()  -- Refresh active character
+
+                -- Initialize character stats if needed
+                if gmcp.Char.Vitals then
+                    local health = gmcp.Char.Vitals.hp or 0
+                    local mana = gmcp.Char.Vitals.mp or 0
+                    local movement = gmcp.Char.Vitals.mv or 0
+                    local tnl = gmcp.Char.Vitals.tnl or 0
+                    local lastLocation = gmcp.Room.Info and gmcp.Room.Info.name or "Unknown"
+
+                    -- Set character data
+                    activeCharacter.health = health
+                    activeCharacter.mana = mana
+                    activeCharacter.movement = movement
+                    activeCharacter.tnl = tnl
+                    activeCharacter.last_location = lastLocation
+
+                    -- Update the character in the database
+                    CharactersDA.UpdateCharacter(activeCharacter)
+                end
+
+                -- Initialize inventory for the new character
+                InventoryDA.ClearInventory(currentCharacterName)  -- Ensure inventory is cleared for a fresh start
+                InventoryDA.UpdateInventoryFromGMCP(currentCharacterName, "inv")  -- Populate inventory from GMCP data
+            end
+        end
     end
 
+    -- Reset the periodic update timer
     if CharactersManager.periodicUpdateTimer then
         killTimer(CharactersManager.periodicUpdateTimer)
     end
@@ -61,7 +107,7 @@ function CharactersManager.OnCharacterStatusActive(event)
             local currentActiveCharacter = CharactersDA.GetActiveCharacter()
 
             if currentActiveCharacter and currentActiveCharacter.name == characterName then
-                cecho("<cyan>The void whispers, \"You are already here.\"\n")
+                --cecho("<cyan>The void whispers, \"You are already here.\"\n")
                 return
             end
 
@@ -178,6 +224,104 @@ function CharactersManager.HandleLogin(name)
     raiseEvent("AshraelPackage.VoidWalker.Managers.CharactersManager.CharacterActive", { characterName = char.name })
     
     CharactersManager.statusCooldownActive = false
+end
+
+function CharactersManager.RegisterCharacter(name, password)
+    name = properCase(name)
+
+    -- Check if the character already exists
+    if CharactersDA.GetCharacter(name) then
+        cecho("<yellow>Character " .. name .. " is already registered in the void.\n")
+        return
+    end
+
+    -- Initialize character with GMCP values
+    local health = gmcp.Char.Vitals and gmcp.Char.Vitals.hp or 0
+    local mana = gmcp.Char.Vitals and gmcp.Char.Vitals.mp or 0
+    local movement = gmcp.Char.Vitals and gmcp.Char.Vitals.mv or 0
+    local tnl = gmcp.Char.Vitals and gmcp.Char.Vitals.tnl or 0
+    local lastLocation = gmcp.Room.Info and gmcp.Room.Info.name or "Unknown"
+
+    -- Register the new character
+    CharactersDA.AddCharacter({
+        name = name,
+        password = password,
+        health = health,
+        mana = mana,
+        movement = movement,
+        tnl = tnl,
+        last_location = lastLocation,
+        is_active = 1,  -- Set as active upon registration
+        is_registered = 1
+    })
+    
+    CharactersDA.SetActiveCharacter(name)
+    -- Update inventory for the new character (initialize as empty)
+    InventoryDA.ClearInventory(name)  -- Ensure inventory is cleared for a fresh start
+    InventoryDA.UpdateInventoryFromGMCP(name, "inv")  -- Populate inventory from GMCP data
+
+    -- Immersive messaging for character registration
+    cecho("<cyan>As you weave the threads of fate, <yellow>" .. name .. "<cyan> emerges from the shadows of the void...\n")
+    cecho("<magenta>The air shimmers as the essence of <yellow>" .. name .. "<magenta> is solidified into existence.\n")
+    cecho("<green>Character " .. name .. " has been registered successfully, ready to embark on their journey!\n")
+    cecho("<cyan>They stand poised at the edge of the void, awaiting adventures untold...\n")
+end
+
+function CharactersManager.AddCharacter(name, password)
+    -- Format the name to proper case
+    name = properCase(name)
+
+    -- Check if the character already exists
+    local existingCharacter = CharactersDA.GetCharacter(name)
+    if existingCharacter then
+        cecho("<red>Error: Character " .. name .. " already exists in the void.<reset>\n")
+        return false
+    end
+
+    -- Create a new character entry
+    local newCharacter = {
+        name = name,
+        password = password,
+        health = 100,  -- Set default values as needed
+        mana = 100,
+        movement = 100,
+        tnl = 0,
+        last_location = "Unknown",
+        is_active = false,
+        is_registered = true
+    }
+
+    -- Add the new character to the database
+    CharactersDA.AddCharacter(newCharacter)
+
+    -- Immersive messaging for character creation
+    cecho("<cyan>The void stirs as you conjure the essence of <yellow>" .. name .. "<cyan>...\n")
+    cecho("<magenta>A swirling mist envelops you, weaving the threads of existence...\n")
+    cecho("<green>Character " .. name .. " has been successfully forged from the fabric of the void!<reset>\n")
+    cecho("<cyan>You sense a new presence in the realm of shadows, ready to embark on adventures unseen...\n")
+
+    return true
+end
+
+function CharactersManager.RemoveCharacter(name)
+    name = properCase(name)
+
+    -- Check if the character exists
+    local character = CharactersDA.GetCharacter(name)
+    if not character then
+        cecho("<yellow>Character " .. name .. " is not registered in the void.\n")
+        return
+    end
+
+    -- Immersive messaging for character removal
+    cecho("<magenta>The void stirs as you prepare to release <yellow>" .. name .. "<magenta> back into its depths...\n")
+    cecho("<cyan>As you utter the farewell, shadows envelop <yellow>" .. name .. "<cyan>, and they begin to fade...\n")
+    
+    -- Remove the character
+    CharactersDA.DeleteCharacter(name)
+    InventoryDA.ClearInventory(name)  -- Clear the character's inventory
+
+    cecho("<green>Character " .. name .. " has been removed from the void, their essence dissipating into the ether.\n")
 end
 
 function CharactersManager.GetCharacterDetails(name)

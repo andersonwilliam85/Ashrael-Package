@@ -62,7 +62,6 @@ function CharactersDA.GetActiveCharacter()
         -- Assuming only one active character, return the first result
         return activeCharacter[1]
     else
-        cecho("<yellow>DEBUG: No active character found in the database.\n")
         return nil
     end
 end

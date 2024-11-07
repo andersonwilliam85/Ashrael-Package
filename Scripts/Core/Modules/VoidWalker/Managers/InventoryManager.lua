@@ -76,7 +76,7 @@ end
 
 -- Search for an item across all characters' inventories
 function InventoryManager.SearchItem(item_name)
-    cecho("<cyan>Reaching into the depths of the void for '" .. item_name .. "'...\n")
+    cecho("<cyan>Delving into the mysterious depths of the void to seek out '" .. item_name .. "'...\n\n")
     local found_items = {}
     item_name = string.lower(item_name)
 
@@ -95,13 +95,13 @@ function InventoryManager.SearchItem(item_name)
     end
 
     if #found_items > 0 then
-        cecho("<magenta>The void reveals the following items:\n")
+        cecho("<magenta>From the swirling mists of the void, the following treasures emerge:\n\n")
         for _, item in ipairs(found_items) do
-            cecho(string.format("<green>%s<reset>: %s (Type: %s, State: %s, Container: %s)\n",
+            cecho(string.format("<green>%s<reset>: <yellow>%s<reset> (Type: %s, State: %s, Container: %s)\n",
                 item.character, item.name, item.type or "N/A", item.state or "N/A", item.container or "main inventory"))
         end
     else
-        cecho("<yellow>The void remains silent; no items found matching '" .. item_name .. "'.\n")
+        cecho("<yellow>The void whispers back, empty and silent; no items matching '" .. item_name .. "' could be found.\n")
     end
 end
 

@@ -325,12 +325,11 @@ function AshraelPackage.ListAvailableVersions()
     -- Display available versions
     cecho("Available versions:\n")
     
-    -- Track the maximum version for comparison later
     local maxVersion = nil
 
     for _, version in ipairs(availableVersions) do
         if not maxVersion or version > maxVersion then
-            maxVersion = version  -- Update maxVersion if a higher version is found
+            maxVersion = version  -- Track the highest version
         end
         
         if version < AshraelPackage.GetGlobalSetting(packageName, "minimum_supported_version") then
@@ -342,7 +341,7 @@ function AshraelPackage.ListAvailableVersions()
         end
     end
 
-    -- If the current version is greater than the highest version in the list, list it as development
+    -- Check if the current version is greater than the highest version
     if AshraelPackage.Version > maxVersion then
         cecho(string.format(" - <yellow>%s (development)<reset>\n", AshraelPackage.Version))
     end
