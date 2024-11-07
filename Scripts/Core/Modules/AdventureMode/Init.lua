@@ -22,7 +22,7 @@ local RecallManager = AshraelPackage.AdventureMode.Managers.RecallManager
 local EquipmentManager = AshraelPackage.AdventureMode.Managers.EquipmentManager
 local SpellupManager = AshraelPackage.AdventureMode.Managers.SpellupManager
 local HealingManager = AshraelPackage.AdventureMode.Managers.HealingManager
-local State = AshraelPackage.State
+local State = AshraelPackage.AdventureMode.State
 
 local Utils = AshraelPackage.AdventureMode.Utils
 
@@ -89,7 +89,7 @@ function AshraelPackage.AdventureMode.ToggleAdventure(mode)
         Utils.DebugPrint("Adventure mode OFF.")
         State.AdventureModeType = "solo"
         Utils.DebugPrint("Equipping mana gear and attempting recall to sanctum.")
-        AdventureMode.InitiateRecallAndRecovery()
+        AshraelPackage.AdventureMode.InitiateRecallAndRecovery()
     end
 end
 
