@@ -1,9 +1,6 @@
 -- Regex Triggers:
 -- ^voidwalk(?:\s+(\w+)(?:\s+(.*))?)?$
 
-AshraelPackage = AshraelPackage or {}
-AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
-
 local VoidWalker = AshraelPackage.VoidWalker
 local Characters = AshraelPackage.VoidWalker.Managers.CharactersManager
 local Inventory = AshraelPackage.VoidWalker.Managers.InventoryManager

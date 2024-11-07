@@ -1,5 +1,3 @@
-AshraelPackage.AdventureMode.EquipmentManager = AshraelPackage.AdventureMode.EquipmentManager or {}
-
 local EquipmentManager = AshraelPackage.AdventureMode.Managers.EquipmentManager
 
 function EquipmentManager.Equip(gearType)
