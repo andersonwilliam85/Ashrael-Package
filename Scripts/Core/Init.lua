@@ -403,26 +403,31 @@ end
 
 -- Function to display help information
 function AshraelPackage.DisplayHelp()
-    cecho("<cyan>Welcome to Ashrael Package 1.4.2!\n")
-    cecho("<yellow>This package can manage settings and variables for you efficiently.\n")
-    cecho("You can set and retrieve global and character-specific settings using the following functions:\n\n")
+    cecho("<cyan>Welcome to Ashrael Package 1.4.2!<reset>\n")
+    cecho("<cyan>This package can manage settings efficiently and enhance your gameplay experience.<reset>\n")
+    cecho("You can set and retrieve global and character-specific settings using the following functions:<reset>\n\n")
 
-    cecho("<green>Global Settings:</green>\n")
-    cecho(" - Set a global setting: <yellow>AshraelPackage.SetGlobalSetting(module, settingName, value)</yellow>\n")
-    cecho(" - Get a global setting: <yellow>AshraelPackage.GetGlobalSetting(module, settingName)</yellow>\n")
-    cecho(" - Remove a global setting: <yellow>AshraelPackage.RemoveGlobalSetting(module, settingName)</yellow>\n")
+    cecho("<green>Global Settings:<reset>\n")
+    cecho(" - Set a global setting: <green>AshraelPackage.SetGlobalSetting(module, settingName, value)<reset>\n")
+    cecho(" - Get a global setting: <green>AshraelPackage.GetGlobalSetting(module, settingName)<reset>\n")
+    cecho(" - Remove a global setting: <green>AshraelPackage.RemoveGlobalSetting(module, settingName)<reset>\n")
     
-    cecho("\n<green>Character Settings:</green>\n")
-    cecho(" - Set a character setting: <yellow>AshraelPackage.SetCharacterSetting(characterName, module, settingName, value)</yellow>\n")
-    cecho(" - Get a character setting: <yellow>AshraelPackage.GetCharacterSetting(characterName, module, settingName)</yellow>\n")
-    cecho(" - Remove a character setting: <yellow>AshraelPackage.RemoveCharacterSetting(characterName, module, settingName)</yellow>\n")
+    cecho("\n<green>Character Settings:<reset>\n")
+    cecho(" - Set a character setting: <green>AshraelPackage.SetCharacterSetting(characterName, module, settingName, value)<reset>\n")
+    cecho(" - Get a character setting: <green>AshraelPackage.GetCharacterSetting(characterName, module, settingName)<reset>\n")
+    cecho(" - Remove a character setting: <green>AshraelPackage.RemoveCharacterSetting(characterName, module, settingName)<reset>\n")
 
-    cecho("\n<green>Get all settings:</green>\n")
-    cecho(" - Get all global settings for a module: <yellow>AshraelPackage.GetGlobalSettings(module)</yellow>\n")
-    cecho(" - Get all character settings for a character: <yellow>AshraelPackage.GetCharacterSettings(characterName, module)</yellow>\n")
-    cecho(" - Get all setting definitions: <yellow>AshraelPackage.GetAllSettingDefinitions()</yellow>\n")
+    cecho("\n<green>Get all settings:<reset>\n")
+    cecho(" - Get all global settings for a module: <green>AshraelPackage.GetGlobalSettings(module)<reset>\n")
+    cecho(" - Get all character settings for a character: <green>AshraelPackage.GetCharacterSettings(characterName, module)<reset>\n")
+    cecho(" - Get all setting definitions: <green>AshraelPackage.GetAllSettingDefinitions()<reset>\n")
 
-    cecho("\nEnjoy using Ashrael Package to simplify your MUD experience!\n")
+    cecho("\n<green>Package Management:<reset>\n")
+    cecho(" - Update the package to the latest version: <green>ashpkg update<reset>\n")
+    cecho(" - List all available versions: <green>ashpkg versions<reset>\n")
+    cecho(" - Switch to a specific version: <green>ashpkg switch <version><reset>\n")
+
+    cecho("\nEnjoy using Ashrael Package to simplify your MUD experience!<reset>\n")
 end
 
 -- Set up aliases for package commands
