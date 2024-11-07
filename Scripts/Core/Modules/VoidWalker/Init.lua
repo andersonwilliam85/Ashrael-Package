@@ -1,16 +1,19 @@
 --Register all relevant namespaces
+AshraelPackage = AshraelPackage or {}
 AshraelPackage.VoidWalker = AshraelPackage.VoidWalker or {}
+
+AshraelPackage.VoidWalker.DataAccessors = AshraelPackage.VoidWalker.DataAccessors or {}
+
+AshraelPackage.VoidWalker.DataAccessors.CharactersDA = AshraelPackage.VoidWalker.DataAccessors.CharactersDA or {}
+AshraelPackage.VoidWalker.DataAccessors.InventoryDA = AshraelPackage.VoidWalker.DataAccessors.InventoryDA or {}
+
 AshraelPackage.VoidWalker.Managers = AshraelPackage.VoidWalker.Managers or {}
 AshraelPackage.VoidWalker.Managers.InventoryManager = AshraelPackage.VoidWalker.Managers.InventoryManager or {}
 AshraelPackage.VoidWalker.Managers.CharactersManager = AshraelPackage.VoidWalker.Managers.CharactersManager or {}
 AshraelPackage.VoidWalker.Managers.ConfigManager = AshraelPackage.VoidWalker.Managers.ConfigManager or {}
 AshraelPackage.VoidWalker.Managers.EventManager = AshraelPackage.VoidWalker.Managers.EventManager or {}
 
-AshraelPackage.VoidWalker.DataAccessors = AshraelPackage.VoidWalker.DataAccessors or {}
-AshraelPackage.VoidWalker.DataAccessors.CharactersDA = AshraelPackage.VoidWalker.DataAccessors.CharactersDA or {}
-
 AshraelPackage.VoidWalker.Databases = AshraelPackage.VoidWalker.Databases or {}
-
 
 -- Create the VoidWalkerDB with characters and inventory tables
 AshraelPackage.VoidWalker.Databases.VoidWalkerDB = db:create("voidwalker", {

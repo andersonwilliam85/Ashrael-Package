@@ -2,8 +2,7 @@
 AshraelPackage = AshraelPackage or {}
 AshraelPackage.AdventureMode = AshraelPackage.AdventureMode or {}
 
-local AdventureMode = AshraelPackage.AdventureMode
-AdventureMode.State = AdventureMode.State or {
+AshraelPackage.AdventureMode.State = AshraelPackage.AdventureMode.State or {
     IsAdventuring = false,
     IsRecovering = false,
     AdventureModeType = "solo",  -- Default mode is solo
@@ -23,12 +22,12 @@ local RecallManager = AshraelPackage.AdventureMode.Managers.RecallManager
 local EquipmentManager = AshraelPackage.AdventureMode.Managers.EquipmentManager
 local SpellupManager = AshraelPackage.AdventureMode.Managers.SpellupManager
 local HealingManager = AshraelPackage.AdventureMode.Managers.HealingManager
-local State = AdventureMode.State
+local State = AshraelPackage.State
 
 local Utils = AshraelPackage.AdventureMode.Utils
 
 -- Function to initiate recall and recovery process
-function AdventureMode.InitiateRecallAndRecovery()
+function AshraelPackage.AdventureMode.InitiateRecallAndRecovery()
     Utils.DebugPrint("Initiating recall and recovery process.")
 
     local recoveryCoroutine = coroutine.create(function()
@@ -73,7 +72,7 @@ function AdventureMode.InitiateRecallAndRecovery()
 end
 
 -- Toggle Adventure Mode ON/OFF and manage recovery initiation
-function AdventureMode.ToggleAdventure(mode)
+function AshraelPackage.AdventureMode.ToggleAdventure(mode)
     State.IsAdventuring = not State.IsAdventuring
     State.IsRecovering = false
 
@@ -95,7 +94,7 @@ function AdventureMode.ToggleAdventure(mode)
 end
 
 -- Toggle Recovery Mode ON/OFF and initiate recovery
-function AdventureMode.ToggleRecovery()
+function AshraelPackage.AdventureMode.ToggleRecovery()
     coroutine.wrap(function()
         if not State.IsAdventuring then
             Utils.DebugPrint("Cannot enter Recovery mode without Adventure mode enabled.", true)
@@ -121,7 +120,7 @@ function AdventureMode.ToggleRecovery()
 end
 
 -- Resume Adventure Mode from Recovery Mode
-function AdventureMode.ResumeAdventure()
+function AshraelPackage.AdventureMode.ResumeAdventure()
     if not State.IsRecovering then
         Utils.DebugPrint("Not in recovery mode. No adventure to resume.", true)
         return
@@ -144,7 +143,7 @@ function AdventureMode.ResumeAdventure()
 end
 
 -- Display current Adventure Mode status
-function AdventureMode.DisplayStatus()
+function AshraelPackage.AdventureMode.DisplayStatus()
     Utils.DebugPrint("Displaying current status of Adventure Mode.")
     cecho("\n<blue>Status:<reset> Adventure Mode: <green>" .. (State.IsAdventuring and "ON" or "OFF") .. 
           "<reset>, Mode Type: <yellow>" .. State.AdventureModeType .. 
@@ -152,7 +151,7 @@ function AdventureMode.DisplayStatus()
 end
 
 -- Reset Adventure and Recovery Modes to OFF
-function AdventureMode.ResetModes()
+function AshraelPackage.AdventureMode.ResetModes()
     State.IsAdventuring = false
     State.IsRecovering = false
     State.DebugMode = false
@@ -161,7 +160,7 @@ function AdventureMode.ResetModes()
 end
 
 -- Display help for Adventure Mode commands
-function AdventureMode.DisplayHelp()
+function AshraelPackage.AdventureMode.DisplayHelp()
     Utils.DebugPrint("Displaying help for Adventure Mode commands.")
     cecho("\n<blue>Adventure Mode Help<reset>\n" ..
           "<green>adv<reset> - Toggles Adventure mode ON or OFF.\n" ..

@@ -105,4 +105,5 @@ function CharactersDA.DeleteCharacter(name)
 end
 
 AshraelPackage.VoidWalker.DataAccessors.CharactersDA = CharactersDA
+
 return CharactersDA
