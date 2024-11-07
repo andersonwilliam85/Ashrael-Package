@@ -8,6 +8,9 @@ local databaseName = "ashraeldb"
 
 AshraelPackage.Database = {}
 
+-- Module-level variable to track the intended action after download
+AshraelPackage.DownloadAction = nil
+
 -- Function to create and initialize the database
 function AshraelPackage.InitializeDatabase()
     -- Create the database
@@ -38,12 +41,11 @@ function AshraelPackage.InitializeDatabase()
 
     -- Initialize default values for setting definitions
     local defaultSettings = {
-        {setting_name = "persistent_download_path", default_value = getMudletHomeDir() .. "/Ashrael-Package/package-data/", scope = "package", description = "Path for persistent downloads.", module = packageName},
+        {setting_name = "persistent_download_path", default_value = getMudletHomeDir() .. "/ashrael-package-data/", scope = "package", description = "Path for persistent downloads.", module = packageName},
         {setting_name = "online_version_file", default_value = "https://raw.githubusercontent.com/andersonwilliam85/Ashrael-Package/main/versions.lua", scope = "package", description = "URL for online version file.", module = packageName},
         {setting_name = "online_package_file", default_value = "https://github.com/andersonwilliam85/Ashrael-Package/releases/download/", scope = "package", description = "URL for online package file.", module = packageName},
-        {setting_name = "minimum_supported_version", default_value = "v1.1.2-beta", scope = "package", description = "Minimum supported version.", module = packageName},
-        {setting_name = "default_version", default_value = "v1.1.2-beta", scope = "package", description = "Default version.", module = packageName},
-        {setting_name = "current_version", default_value = "v1.1.2-beta", scope = "package", description = "Current version of the AshraelPackage.", module = packageName},
+        {setting_name = "minimum_supported_version", default_value = "v1.4.3", scope = "package", description = "Minimum supported version.", module = packageName},
+        {setting_name = "current_version", default_value = getPackageInfo(packageName).version, scope = "package", description = "Current version of the AshraelPackage.", module = packageName},
         {setting_name = "auto_update", default_value = true, scope = "package", description = "Determines if the package auto updates on startup.", module = packageName}
     }
 
@@ -57,11 +59,13 @@ end
 
 function AshraelPackage.InitializeGlobalSettings(defaultSettings)
     for _, setting in ipairs(defaultSettings) do
-        local existingSetting = AshraelPackage.GetGlobalSetting(setting.module, setting.setting_name)
-        if existingSetting == nil then
-            AshraelPackage.SetGlobalSetting(setting.module, setting.setting_name, setting.default_value)
-        end
+        -- Always update the setting to the default value from the package
+        AshraelPackage.SetGlobalSetting(setting.module, setting.setting_name, setting.default_value)
     end
+
+    -- Additionally, ensure the current version is always updated
+    local currentVersion = getPackageInfo(packageName).version
+    AshraelPackage.SetGlobalSetting(packageName, "current_version", currentVersion)
 end
 
 -- Function to add a setting definition
@@ -280,11 +284,7 @@ end
 -- Initialize current version from Mudlet package metadata or default
 function AshraelPackage.InitializeVersion()
     local packageVersion = getPackageInfo(packageName).version
-    if packageVersion then
-        AshraelPackage.Version = packageVersion
-    else
-        AshraelPackage.Version = AshraelPackage.GetGlobalSetting(packageName, "default_version") or "v1.1.2-beta"
-    end
+    AshraelPackage.Version = packageVersion
 end
 
 -- Function to ensure the persistent download path exists
@@ -295,21 +295,20 @@ function AshraelPackage.EnsurePersistentDownloadPathExists()
     end
 end
 
--- Download and list available versions
-function AshraelPackage.DownloadAndListVersions()
-    -- Ensure the persistent download path exists
-    AshraelPackage.EnsurePersistentDownloadPathExists()
-    
-    -- Retrieve paths
-    local persistentDownloadPath = AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path")
+-- Function to download the versions file
+function AshraelPackage.DownloadVersionsFile()
     local onlineVersionFile = AshraelPackage.GetGlobalSetting(packageName, "online_version_file")
+    local persistentDownloadPath = AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path")
+    local versionsPath = persistentDownloadPath .. "versions.lua"
+
+    cecho("Downloading versions.lua from " .. onlineVersionFile .. "\n")
     
-    -- Call the download function
-    downloadFile(persistentDownloadPath .. "versions.lua", onlineVersionFile)
+    -- Attempt to download the file
+    downloadFile(versionsPath, onlineVersionFile)  -- This starts the download asynchronously
 end
 
--- Automatically update to the latest version if newer
-function AshraelPackage.CheckAndUpdateToLatestVersion()
+-- Function to list available versions
+function AshraelPackage.ListAvailableVersions()
     local path = AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "versions.lua"
     local availableVersions
 
@@ -323,70 +322,124 @@ function AshraelPackage.CheckAndUpdateToLatestVersion()
         return
     end
 
-    -- Ensure there are available versions loaded
-    if not availableVersions or #availableVersions == 0 then
-        cecho("<red>No available versions found in " .. path .. "<reset>\n")
-        return
+    -- Display available versions
+    cecho("Available versions:\n")
+    
+    -- Track the maximum version for comparison later
+    local maxVersion = nil
+
+    for _, version in ipairs(availableVersions) do
+        if not maxVersion or version > maxVersion then
+            maxVersion = version  -- Update maxVersion if a higher version is found
+        end
+        
+        if version < AshraelPackage.GetGlobalSetting(packageName, "minimum_supported_version") then
+            cecho(string.format(" - <red>%s (unsupported)<reset>\n", version))
+        elseif version == AshraelPackage.Version then
+            cecho(string.format(" - <green>%s (current version)<reset>\n", version))
+        else
+            cecho(string.format(" - %s\n", version))
+        end
     end
 
-    -- Get the latest version from the list
-    local latestVersion = availableVersions[#availableVersions]
-    cecho("Latest version available: " .. latestVersion .. "\n")
-
-    -- Compare the latest version with the current version
-    if latestVersion ~= AshraelPackage.Version then
-        cecho("Updating to version: " .. latestVersion .. "\n")
-        AshraelPackage.UpdateToVersion(latestVersion)
-    else
-        cecho("<green>You are already on the latest version: " .. AshraelPackage.Version .. "<reset>\n")
+    -- If the current version is greater than the highest version in the list, list it as development
+    if AshraelPackage.Version > maxVersion then
+        cecho(string.format(" - <yellow>%s (development)<reset>\n", AshraelPackage.Version))
     end
 end
 
+-- Function to download the versions file and then list the available versions
+function AshraelPackage.DownloadAndListVersions()
+    AshraelPackage.DownloadAction = "list"  -- Set the action to list
+    AshraelPackage.DownloadVersionsFile()  -- Initiate the download
+end
+
+-- Function to check for updates and download the latest versions file
+function AshraelPackage.CheckForUpdates()
+    local onlineVersionFile = AshraelPackage.GetGlobalSetting(packageName, "online_version_file")
+    local persistentDownloadPath = AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path")
+    local versionsPath = persistentDownloadPath .. "versions.lua"
+
+    -- Set the action to update
+    AshraelPackage.DownloadAction = "update"
+
+    -- Always download the latest versions.lua file
+    cecho("Downloading versions.lua from " .. onlineVersionFile .. "\n")
+    downloadFile(versionsPath, onlineVersionFile)  -- Start the download
+end
+
+
 -- Switch to a specific version
 function AshraelPackage.SwitchToVersion(version)
-    cecho("Switching to version...\n")
     local path = AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "versions.lua"
 
-    -- Check if the file exists before attempting to load it
-    if not io.open(path, "r") then
-        cecho("<red>Unable to find versions.lua at " .. path .. "<reset>\n")
-        return
-    end
-
+    -- Load available versions
     local availableVersions
     local status, err = pcall(function() 
         availableVersions = dofile(path) 
     end)
 
     if not status then
-        cecho("<red>Error loading versions: " .. tostring(err) .. "<reset>\n")
-        return
+        return  -- If there's an error, do not proceed further
     end
 
+    -- Check for minimum supported version
     if version < AshraelPackage.GetGlobalSetting(packageName, "minimum_supported_version") then
-        cecho("<red>Version " .. version .. " is below the minimum supported version.<reset>\n")
+        cecho("<red>Error: Version " .. version .. " is below the minimum supported version.<reset>\n")
         return
     end
 
-    if not table.contains(availableVersions, version) then
+    -- Check if the version is in the available versions list
+    if table.contains(availableVersions, version) then
         cecho("Switching to version " .. version .. "\n")
         AshraelPackage.UpdateToVersion(version)
     else
-        cecho("Version " .. version .. " is already installed.\n")
+        cecho("<red>Version " .. version .. " is not available.<reset>\n")
     end
 end
 
 -- Update to a specified version
 function AshraelPackage.UpdateToVersion(version)
-    local packageURL = AshraelPackage.GetGlobalSetting(packageName, "online_package_file") .. version .. "/AshraelPackage.mpackage"
-    downloadFile(AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "AshraelPackage.mpackage", packageURL)
+    local packageURL = AshraelPackage.GetGlobalSetting(packageName, "online_package_file") .. version .. "/Ashrael-Package.mpackage"
+    downloadFile(AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "Ashrael-Package.mpackage", packageURL)
 end
 
 -- Handle file download completion event
 function AshraelPackage.OnFileDownloaded(event, filename)
     if filename == AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "versions.lua" then
-        AshraelPackage.DisplayDownloadedVersions()
-    elseif filename == AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "AshraelPackage.mpackage" then
+        cecho("<green>Successfully downloaded versions.lua!<reset>\n")
+        
+        -- Now, depending on the action, either list versions or check for updates
+        if AshraelPackage.DownloadAction == "list" then
+            AshraelPackage.ListAvailableVersions()  -- Call to list the versions
+        elseif AshraelPackage.DownloadAction == "update" then
+            -- Proceed to check for updates
+            local availableVersions
+            local status, err = pcall(function()
+                availableVersions = dofile(filename)
+            end)
+
+            if not status then
+                cecho("<red>Error loading versions from " .. filename .. ": " .. tostring(err) .. "<reset>\n")
+                return
+            end
+
+            local latestVersion = availableVersions[#availableVersions]
+            if latestVersion > AshraelPackage.Version then
+                cecho("Updating to version: " .. latestVersion .. "\n")
+                AshraelPackage.UpdateToVersion(latestVersion)
+            elseif latestVersion == AshraelPackage.Version then
+                cecho("<yellow>You are already using: " .. AshraelPackage.Version .. "<reset>\n")
+            else
+                cecho("<yellow>You appear to be on a development version: " .. AshraelPackage.Version .. 
+                      ". Autoupdate has been disabled. Please use the switch command to update.<reset>\n")
+            end
+        end
+        
+        -- Reset the action back to nil
+        AshraelPackage.DownloadAction = nil
+    elseif filename == AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "Ashrael-Package.mpackage" then
+        -- Handle package installation logic
         if io.exists(filename) then
             if table.contains(getPackages(), packageName) then
                 uninstallPackage(packageName)
@@ -396,41 +449,6 @@ function AshraelPackage.OnFileDownloaded(event, filename)
                 AshraelPackage.Version = getPackageInfo(packageName).version or "v1.1.2-beta"
             end
         end
-    end
-end
-
--- Display the versions after they are downloaded, with current version indicator
-function AshraelPackage.DisplayDownloadedVersions()
-    local path = AshraelPackage.GetGlobalSetting(packageName, "persistent_download_path") .. "versions.lua"
-    local availableVersions
-    local status, err = pcall(function() availableVersions = dofile(path) end)
-
-    if not status then
-        return
-    end
-
-    cecho("<green>Available versions:\n")
-
-    -- Get the current package version from metadata
-    local currentPackageVersion = getPackageInfo(packageName).version
-
-    local isCurrentVersionListed = false  -- Flag to track if the current version is listed
-
-    -- List the available versions from versions.lua
-    for _, version in ipairs(availableVersions) do
-        if version < AshraelPackage.GetGlobalSetting(packageName, "minimum_supported_version") then
-            cecho(string.format(" - <red>%s (unsupported)<reset>\n", version))
-        elseif version == currentPackageVersion then
-            cecho(string.format(" - <green>%s (current version)<reset>\n", version))
-            isCurrentVersionListed = true  -- Mark as listed
-        else
-            cecho(string.format(" - %s\n", version))
-        end
-    end
-
-    -- If the current package version isn't listed, display it as a development version
-    if not isCurrentVersionListed then
-        cecho(string.format(" - <yellow>%s (development)<reset>\n", currentPackageVersion))
     end
 end
 
@@ -466,7 +484,7 @@ end
 -- Set up aliases for package commands
 if not AshraelPackage.AliasCreated then
     tempAlias("^ashpkg$", [[AshraelPackage.DisplayHelp()]])  -- Updated to trigger help on blank command
-    tempAlias("^ashpkg update$", [[AshraelPackage.CheckAndUpdateToLatestVersion()]])
+    tempAlias("^ashpkg update$", [[AshraelPackage.CheckForUpdates()]])
     tempAlias("^ashpkg versions$", [[AshraelPackage.DownloadAndListVersions()]])
     tempAlias("^ashpkg switch (.+)$", [[AshraelPackage.SwitchToVersion(matches[2])]])
     AshraelPackage.AliasCreated = true
@@ -482,3 +500,4 @@ AshraelPackage.DownloadHandler = registerAnonymousEventHandler("sysDownloadDone"
 -- Call the initialization function
 AshraelPackage.InitializeDatabase()
 AshraelPackage.InitializeVersion()
+AshraelPackage.EnsurePersistentDownloadPathExists()

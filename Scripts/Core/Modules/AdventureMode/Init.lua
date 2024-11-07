@@ -174,7 +174,7 @@ function AshraelPackage.AdventureMode.DisplayHelp()
 end
 
 -- Confirm successful initialization of Adventure Mode
-if AdventureMode then
+if AshraelPackage.AdventureMode then
     cecho("<green>Adventure Mode initialized successfully.\n")
 else
     cecho("<red>Error initializing Adventure Mode. Please check configuration.\n")
