@@ -11,6 +11,6 @@ return {
   "v1.4.0",
   "v1.4.1",
   "v1.4.2",
-  "v1.4.3."
+  "v1.4.3"
 }
 -- Add new versions at the end as they are released
