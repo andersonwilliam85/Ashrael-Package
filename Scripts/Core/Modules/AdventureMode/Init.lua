@@ -96,20 +96,11 @@ end
 -- Toggle Recovery Mode ON/OFF and initiate recovery
 function AshraelPackage.AdventureMode.ToggleRecovery()
     coroutine.wrap(function()
-        if not State.IsAdventuring then
-            Utils.DebugPrint("Cannot enter Recovery mode without Adventure mode enabled.", true)
-            return
-        end
-
         State.IsRecovering = not State.IsRecovering
         if State.IsRecovering then
-            if State.AdventureModeType == "solo" then
-                Utils.DebugPrint("Solo Recovery mode ON: Prioritizing self-healing and buffs.")
-                send("recall set")
-                AshraelPackage.AdventureMode.InitiateRecallAndRecovery()
-            elseif State.AdventureModeType == "group" then
-                Utils.DebugPrint("Group Recovery mode ON: Preparing group recovery actions.")
-            end
+            Utils.DebugPrint("Recovery mode ON: Prioritizing self-healing and buffs.")
+            send("recall set")
+            AshraelPackage.AdventureMode.InitiateRecallAndRecovery()
         else
             Utils.DebugPrint("Recovery mode OFF.")
             if StatTable.Position and StatTable.Position:lower() == "sleep" then
