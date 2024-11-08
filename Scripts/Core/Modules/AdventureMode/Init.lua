@@ -106,7 +106,7 @@ function AshraelPackage.AdventureMode.ToggleRecovery()
             if State.AdventureModeType == "solo" then
                 Utils.DebugPrint("Solo Recovery mode ON: Prioritizing self-healing and buffs.")
                 send("recall set")
-                AdventureMode.InitiateRecallAndRecovery()
+                AshraelPackage.AdventureMode.InitiateRecallAndRecovery()
             elseif State.AdventureModeType == "group" then
                 Utils.DebugPrint("Group Recovery mode ON: Preparing group recovery actions.")
             end
