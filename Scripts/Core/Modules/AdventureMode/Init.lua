@@ -4,7 +4,6 @@ AshraelPackage.AdventureMode = AshraelPackage.AdventureMode or {}
 
 AshraelPackage.AdventureMode.State = AshraelPackage.AdventureMode.State or {
     IsAdventuring = false,
-    IsRecovering = false,
     AdventureModeType = "solo",  -- Default mode is solo
     DebugMode = false  -- Tracks if debug mode is on
 }
@@ -23,11 +22,10 @@ local EquipmentManager = AshraelPackage.AdventureMode.Managers.EquipmentManager
 local SpellupManager = AshraelPackage.AdventureMode.Managers.SpellupManager
 local HealingManager = AshraelPackage.AdventureMode.Managers.HealingManager
 local State = AshraelPackage.AdventureMode.State
-
 local Utils = AshraelPackage.AdventureMode.Utils
 
 -- Function to initiate recall and recovery process
-function AshraelPackage.AdventureMode.InitiateRecallAndRecovery()
+function AshraelPackage.AdventureMode.InitiateRecovery()
     Utils.DebugPrint("Initiating recall and recovery process.")
 
     local recoveryCoroutine = coroutine.create(function()
@@ -74,7 +72,6 @@ end
 -- Toggle Adventure Mode ON/OFF and manage recovery initiation
 function AshraelPackage.AdventureMode.ToggleAdventure(mode)
     State.IsAdventuring = not State.IsAdventuring
-    State.IsRecovering = false
 
     if State.IsAdventuring then
         State.AdventureModeType = mode or "solo"
@@ -89,65 +86,39 @@ function AshraelPackage.AdventureMode.ToggleAdventure(mode)
         Utils.DebugPrint("Adventure mode OFF.")
         State.AdventureModeType = "solo"
         Utils.DebugPrint("Equipping mana gear and attempting recall to sanctum.")
-        AshraelPackage.AdventureMode.InitiateRecallAndRecovery()
+        AshraelPackage.AdventureMode.InitiateRecovery()
     end
 end
 
--- Toggle Recovery Mode ON/OFF and initiate recovery
-function AshraelPackage.AdventureMode.ToggleRecovery()
-    coroutine.wrap(function()
-        State.IsRecovering = not State.IsRecovering
-        if State.IsRecovering then
-            Utils.DebugPrint("Recovery mode ON: Prioritizing self-healing and buffs.")
-            send("recall set")
-            AshraelPackage.AdventureMode.InitiateRecallAndRecovery()
-        else
-            Utils.DebugPrint("Recovery mode OFF.")
-            if StatTable.Position and StatTable.Position:lower() == "sleep" then
-                send("wake")
-            end
-        end
-    end)()
+-- Command to initiate recovery directly
+function AshraelPackage.AdventureMode.Recover()
+    Utils.DebugPrint("Starting recovery process.")
+    send("recall set")
+    AshraelPackage.AdventureMode.InitiateRecovery()
 end
 
--- Resume Adventure Mode from Recovery Mode
+-- Resume Adventure Mode after a pause
 function AshraelPackage.AdventureMode.ResumeAdventure()
-    if not State.IsRecovering then
-        Utils.DebugPrint("Not in recovery mode. No adventure to resume.", true)
-        return
-    end
-    State.IsRecovering = false
-
-    if State.AdventureModeType == "solo" then
-        Utils.DebugPrint("Resuming Solo Adventure mode.")
-        if StatTable.Position and StatTable.Position:lower() == "sleep" then
-            send("wake")
-        end
-        EquipmentManager.Equip("tank")
-        send("recall")
-        send("look")
-        Utils.DebugPrint("Solo Adventure mode resumed successfully.")
-    elseif State.AdventureModeType == "group" then
-        Utils.DebugPrint("Resuming Group Adventure mode.")
-        send("cast group_ready")
-    end
+    Utils.DebugPrint("Recalling and preparing for battle.")
+    send("wake")
+    EquipmentManager.Equip("tank")
+    send("recall")
+    send("look")
 end
 
 -- Display current Adventure Mode status
 function AshraelPackage.AdventureMode.DisplayStatus()
     Utils.DebugPrint("Displaying current status of Adventure Mode.")
     cecho("\n<blue>Status:<reset> Adventure Mode: <green>" .. (State.IsAdventuring and "ON" or "OFF") .. 
-          "<reset>, Mode Type: <yellow>" .. State.AdventureModeType .. 
-          "<reset>, Recovery Mode: <yellow>" .. (State.IsRecovering and "YES" or "NO") .. "<reset>\n")
+          "<reset>, Mode Type: <yellow>" .. State.AdventureModeType .. "<reset>\n")
 end
 
--- Reset Adventure and Recovery Modes to OFF
+-- Reset Adventure Mode to OFF
 function AshraelPackage.AdventureMode.ResetModes()
     State.IsAdventuring = false
-    State.IsRecovering = false
     State.DebugMode = false
     State.AdventureModeType = "solo"
-    Utils.DebugPrint("Adventure and Recovery modes have been reset.", true)
+    Utils.DebugPrint("Adventure mode has been reset.", true)
 end
 
 -- Display help for Adventure Mode commands
@@ -157,11 +128,11 @@ function AshraelPackage.AdventureMode.DisplayHelp()
           "<green>adv<reset> - Toggles Adventure mode ON or OFF.\n" ..
           "<green>adv solo<reset> - Toggles Adventure mode ON in Solo mode.\n" ..
           "<green>adv group<reset> - Toggles Adventure mode ON in Group mode.\n" ..
-          "<green>adv resume<reset> - Resumes Adventure mode from Recovery mode.\n" ..
-          "<green>adv recover<reset> - Toggles Recovery mode ON or OFF if Adventure mode is ON.\n" ..
-          "<green>adv status<reset> - Displays current status of Adventure and Recovery modes.\n" ..
-          "<green>adv reset<reset> - Resets Adventure and Recovery modes to OFF.\n" ..
-          "<green>adv <cmd> --debug <reset> - Set DebugMode to true to ON and provides additional logging.\n")
+          "<green>adv resume<reset> - Recalls and prepares you for battle.\n" ..
+          "<green>adv recover<reset> - Directly initiates the recall and recovery process.\n" ..
+          "<green>adv status<reset> - Displays the current status of Adventure mode.\n" ..
+          "<green>adv reset<reset> - Resets Adventure mode to OFF.\n" ..
+          "<green>adv <cmd> --debug<reset> - Sets DebugMode ON, providing additional logging.\n")
 end
 
 -- Confirm successful initialization of Adventure Mode

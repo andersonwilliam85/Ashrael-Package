@@ -6,8 +6,8 @@ local InventoryDA = AshraelPackage.VoidWalker.DataAccessors.InventoryDA
 CharactersManager.isSwitching = false
 CharactersManager.statusCooldownActive = false
 CharactersManager.isUpdating = false
-local statusCooldownDuration = 30  -- seconds
-local activeCharacterUpdateInterval = 30 -- seconds
+local statusCooldownDuration = 60  -- seconds
+local activeCharacterUpdateInterval = 60 -- seconds
 
 -- Format names to proper case
 local function properCase(name)
@@ -130,7 +130,7 @@ function CharactersManager.OnCharacterStatusActive(event)
                     end
                 else
                     cecho("<cyan>The void sighs, \"Patience...\"\n")
-                    tempTimer(30, checkStatus)
+                    tempTimer(statusCooldownDuration, checkStatus)
                 end
             end)(characterName)
 
@@ -139,7 +139,7 @@ function CharactersManager.OnCharacterStatusActive(event)
                 CharactersManager.statusCooldownActive = false
             end)
         else
-            tempTimer(30, checkStatus)
+            tempTimer(statusCooldownDuration, checkStatus)
         end
     end
 

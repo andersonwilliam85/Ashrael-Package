@@ -5,5 +5,5 @@
 if matches[2] == "resume" then
     AshraelPackage.AdventureMode.ResumeAdventure()
 elseif matches[2] == "recover" then
-    AshraelPackage.AdventureMode.ToggleRecovery()
+    AshraelPackage.AdventureMode.Recover()
 end

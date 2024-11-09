@@ -6,7 +6,6 @@ AshraelPackage = AshraelPackage or {}
 AshraelPackage.AdventureMode = AshraelPackage.AdventureMode or {}
 AshraelPackage.AdventureMode.State = AshraelPackage.AdventureMode.State or {
     IsAdventuring = false,
-    IsRecovering = false,
     AdventureModeType = "solo",  -- Default mode is solo
     DebugMode = false  -- Tracks if debug mode is on
 }
@@ -22,17 +21,17 @@ local function ProcessCommand(command, mode)
     if command == "adv" then
         AdventureMode.ToggleAdventure(mode)  -- Use mode ("solo" or "group") from State
     elseif command == "adv resume" then
-        AdventureMode.ResumeAdventure()  -- Resume adventure directly, with DebugMode accessed from State
+        AdventureMode.ResumeAdventure()  -- Resume adventure directly, preparing for battle
     elseif command == "adv recover" then
-        AdventureMode.ToggleRecovery()  -- Toggle recovery mode directly
+        AdventureMode.Recover()  -- Initiate the recovery process directly
     elseif command == "adv status" then
         AdventureMode.DisplayStatus()  -- Show current status
     elseif command == "adv reset" then
-        AdventureMode.ResetModes()  -- Reset modes without needing DebugMode argument
+        AdventureMode.ResetModes()  -- Reset modes
     elseif command == "adv help" then
         AdventureMode.DisplayHelp()  -- Display help information
     elseif command == "heals" then
-        AdventureMode.Healing.RequestHealing()  -- Call healing handler with debug access from State
+        AdventureMode.Managers.HealingManager.RequestHealing()  -- Call healing handler
     else
         cecho("\n<red>Unknown command. Type 'adv help' or 'heals' for available commands.<reset>\n")
     end
