@@ -13,24 +13,29 @@ SpellupManager.SpellThreshold = SpellupManager.SpellThreshold or 5
 
 -- Define spell-up command preferences based on the player's class and bot class if not already set
 SpellupManager.ClassCommands = SpellupManager.ClassCommands or {
-    mage = { priest = "full", druid = "split", psionicist = "split" },
-    warrior = { priest = "split", druid = "full", psionicist = "split" },
-    cleric = { priest = "full", druid = "split", psionicist = "split" },
-    druid = { priest = "split", druid = "full", psionicist = "split" },
+    mage = { priest = "full", druid = "split", psionicist = "split", stormlord = "split" },
+    wizard = { priest = "full", druid = "split", psionicist = "split", stormlord = "split" },
+    warrior = { priest = "split", druid = "full", psionicist = "split", stormlord = "full" },
+    cleric = { priest = "full", druid = "split", psionicist = "split", stormlord = "split" },
+    druid = { priest = "split", druid = "full", psionicist = "split", stormlord = "split" },
 }
 
 -- Define spells each class inherently cannot cast based on class limitations if not already set
 SpellupManager.ClassUnknownSpells = SpellupManager.ClassUnknownSpells or {
-    priest = { "Awen", "SteelSkeleton", "Barkskin" },
+    priest = { "Awen", "SteelSkeleton", "Barkskin", "Frenzy"},
     druid = { "SteelSkeleton", "Aegis" },
     psionicist = { "Sanctuary", "Fortitude", "Invincibility", "Awen", "Barkskin", "Aegis" },
+    stormlord = {"Aegis", "SteelSkeleton"}
 }
 
 -- Define primary bots with their respective classes if not already set
 SpellupManager.PrimaryBots = SpellupManager.PrimaryBots or {
     { name = "Logic", class = "priest" },
     { name = "Martyr", class = "priest" },
+    { name = "Textual", class = "priest" },
     { name = "FlutterFly", class = "druid" },
+    { name = "Viridi", class = "druid" },
+    { name = "Torvald", class = "stormlord" },
     { name = "Neodox", class = "psionicist" },
     { name = "Yorrick", class = "druid" },
     { name = "Eiri", class = "priest" },
@@ -44,7 +49,7 @@ SpellupManager.Spells = SpellupManager.Spells or {
     iron = { key = "IronSkin", command = "iron", selfCastOnly = false, classExclusions = {} },
     foci = { key = "Foci", command = "foci", selfCastOnly = false, classExclusions = {} },
     water = { key = "WaterBreathing", command = "water", selfCastOnly = false, classExclusions = {} },
-    awen = { key = "Awen", command = "awen", selfCastOnly = false, classExclusions = { "mage", "priest" } },
+    awen = { key = "Awen", command = "awen", selfCastOnly = false, classExclusions = { "mage", "priest", "wizard" } },
     aegis = { key = "Aegis", command = "aegis", selfCastOnly = false, classExclusions = {} },
     concentrate = { key = "Concentrate", command = "concentrate", selfCastOnly = true, classExclusions = {} },
     mystical = { key = "Mystical", command = "mystical", selfCastOnly = true, classExclusions = {} },
@@ -53,7 +58,7 @@ SpellupManager.Spells = SpellupManager.Spells or {
     bark = { key = "Barkskin", command = "bark", selfCastOnly = false, classExclusions = {} },
     protectionGood = { key = "ProtectionGood", command = "'protection good'", selfCastOnly = true, classExclusions = {} },
     protectionEvil = { key = "ProtectionEvil", command = "'protection evil'", selfCastOnly = true, classExclusions = {} },
-    frenzy = { key = "Frenzy", command = "frenzy", selfCastOnly = false, classExclusions = { "mage", "priest" } },
+    frenzy = { key = "Frenzy", command = "frenzy", selfCastOnly = false, classExclusions = { "mage", "priest", "wizard" } },
 }
 
 -- Function to determine the player's class using StatTable and normalize to lowercase

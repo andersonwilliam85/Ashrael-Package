@@ -13,13 +13,14 @@ local HealingManager = AshraelPackage.AdventureMode.Managers.HealingManager
 HealingManager.Bots = HealingManager.Bots or {
     { name = "Logic", healCommand = "div" },
     { name = "Martyr", healCommand = "div" },
+    { name = "Textual", healCommand = "div" },
     { name = "FlutterFly", healCommand = "div" },
     { name = "Yorrick", healCommand = "div" },
     { name = "Eiri", healCommand = "div" }
 }
 
 -- Constant defining HP gained per div spell if not already set
-HealingManager.DivHealAmount = HealingManager.DivHealAmount or 250
+HealingManager.DivHealAmount = HealingManager.DivHealAmount or 325
 
 -- Function to handle healing requests
 function HealingManager.RequestHealing()

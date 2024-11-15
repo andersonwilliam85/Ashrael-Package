@@ -40,8 +40,6 @@ function AshraelPackage.AdventureMode.InitiateRecovery()
 
         tempTimer(5, function()
             Utils.DebugPrint("Equipping mana gear, initiating healing, and preparing spells.")
-            EquipmentManager.Equip("mana")
-            SpellupManager.RequestSpellup()
             HealingManager.RequestHealing()
 
             if StatTable.Position and StatTable.Position:lower() ~= "sleep" then
@@ -79,13 +77,10 @@ function AshraelPackage.AdventureMode.ToggleAdventure(mode)
         if StatTable.Position and StatTable.Position:lower() == "sleep" then
             send("wake")
         end
-        Utils.DebugPrint("Equipping tank gear and surveying surroundings.")
-        EquipmentManager.Equip("tank")
         send("look")
     else
         Utils.DebugPrint("Adventure mode OFF.")
         State.AdventureModeType = "solo"
-        Utils.DebugPrint("Equipping mana gear and attempting recall to sanctum.")
         AshraelPackage.AdventureMode.InitiateRecovery()
     end
 end
@@ -93,7 +88,6 @@ end
 -- Command to initiate recovery directly
 function AshraelPackage.AdventureMode.Recover()
     Utils.DebugPrint("Starting recovery process.")
-    send("recall set")
     AshraelPackage.AdventureMode.InitiateRecovery()
 end
 
@@ -101,7 +95,6 @@ end
 function AshraelPackage.AdventureMode.ResumeAdventure()
     Utils.DebugPrint("Recalling and preparing for battle.")
     send("wake")
-    EquipmentManager.Equip("tank")
     send("recall")
     send("look")
 end
